@@ -21,6 +21,7 @@ public class HelloWorld {
 	public static void main(String[] args) {
 		System.out.println("One more test");
 		System.out.println("here");
+        System.out.println("test in IntelliJ");
 
 	}
 
