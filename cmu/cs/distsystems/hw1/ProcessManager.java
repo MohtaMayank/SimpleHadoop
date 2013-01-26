@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 
 
@@ -22,9 +23,11 @@ import java.util.concurrent.ExecutionException;
 public class ProcessManager {
 	private static final long HEART_BEAT_INTERVAL = 5000; // 5 seconds
 	//Keeps track of all the running processes.
-	private Map<String, ProcessHandle> processMap = new HashMap<String, ProcessHandle>();
-	private boolean isMaster;
-	private String masterAddress;
+	//TODO: Make this concurrent hash map because different request handlers can
+	//simultaneously modify it.
+	private Map<String, ProcessHandle> processMap = new ConcurrentHashMap<String, ProcessHandle>();
+	private String masterHost;
+	private int masterPort;
 	
 	//TODO: Decide if MasterProcessManager should be a subclass or if
 	// we should use composition.
@@ -33,14 +36,14 @@ public class ProcessManager {
 	}
 	
 	public ProcessManager(String masterAddress) {
-		this.isMaster = false;
-		this.masterAddress = masterAddress;
+		//TODO: what if address not in correct format.
+		this.masterHost = masterAddress.split(":")[0];
+		this.masterPort = new Integer(masterAddress.split(":")[1]);
 	}
 	
 	public void start() {
 		
 		//TODO: register the process manager with master.
-		long lastHeartBeatTime = System.currentTimeMillis();
 		
 		//Setup the command line
 		System.out.println();
@@ -48,45 +51,28 @@ public class ProcessManager {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		String currInput;
 		
-		//TODO Assumption: This loop does not takes a lot of time - Hence, one input
-		//should be processed before user enters new input.
+		//Start HeartBeat Thread - Connects to Master every 5 seconds and sends heartbeat message
+		Thread hbThread = new Thread(new HeartBeatThread(this));
+		hbThread.start();
+		
+		//Start ProcessManagerServer
+		Thread pmServer = new Thread(new ProcessManagerServer(this));
+		pmServer.start();
+		
 		while(true) {
 			try {
 				if(br.ready()) {
 					currInput = br.readLine();
 					handleCommand(currInput);
 				}
-				
-				//TODO: Implement all chores.
-				if( (System.currentTimeMillis() - lastHeartBeatTime) > HEART_BEAT_INTERVAL ) {
-					//TODO: send heartbeat
-				}
-				
-				//Clear up any completed processes.
-				List<String> processesToRemove = new ArrayList<String>();
-				for(ProcessHandle ph : processMap.values() ) {
-					if(ph.getRef().completed()) {
-						ph.getFuture().get();
-						processesToRemove.add(ph.getRef().getId());
-					}
-				}
-				for(String id : processesToRemove){
-					processMap.remove(id);
-				}
-				
-				//See if any process is suspended?
-				
+				//TODO: Check to see if any Migratable process has completed?
 				
 			} catch (IOException e) {
 				//TODO Should we quit or just continue??
 				e.printStackTrace();
-			} catch(InterruptedException e ) {
-				e.printStackTrace();
-			} catch(ExecutionException e)  {
-				e.printStackTrace();
 			}
-			
 		}
+		
 		
 	}
 	
