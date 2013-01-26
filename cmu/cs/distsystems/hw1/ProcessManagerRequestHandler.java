@@ -21,19 +21,15 @@ public class ProcessManagerRequestHandler implements Runnable {
 			ObjectInputStream ois = new ObjectInputStream(clientSocket.getInputStream());
 			String type = (String)ois.readObject();
 			
-			switch(type) {
-				case TRANSFER_PROCESS_TO:
+			if(type.equals(TRANSFER_PROCESS_TO)){
 					TransferDetails td = (TransferDetails) ois.readObject();
 					//TODO: Transfer
-					break;
-				case RUN_PROCESS:
+            }else if(type.equals(RUN_PROCESS)){
 					MigratableProcess p = (MigratableProcess) ois.readObject();
 					//TODO: resume process p.
-					break;
-				case CHECKPOINT_PROCESS:
+            } else if(type.equals(CHECKPOINT_PROCESS)){
 					MigratableProcess p2 = (MigratableProcess) ois.readObject();
 					//TODO: Checkpoint process p2 (save to disk)
-					break;
 			}
 			
 		} catch (Exception e) {

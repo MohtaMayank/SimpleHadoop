@@ -92,17 +92,13 @@ public class ProcessManager {
 		
 		ProcessManager pm;
 		
-		switch(args[1]) {
-			case "--master":
-				pm = new MasterProcessManager();
-				pm.start();
-				break;
-			case "-c":
-				pm = new ProcessManager(args[2]); 
-				break;
-			default:
-				printHelp(args);
-				break;
+		if (args[1].equals("--master")) {
+			pm = new MasterProcessManager();
+			pm.start();
+        } else if(args[1].equals("-c")){
+			pm = new ProcessManager(args[2]);
+        } else{
+    		printHelp(args);
 		}
 		
 		

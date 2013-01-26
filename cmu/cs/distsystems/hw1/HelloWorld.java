@@ -19,6 +19,8 @@ public class HelloWorld {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+
+        int i = 3;
 		System.out.println("One more test");
 		System.out.println("here");
         System.out.println("test in IntelliJ");
