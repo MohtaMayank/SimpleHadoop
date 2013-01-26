@@ -11,19 +11,31 @@ import java.util.Date;
  */
 public class RemoteProcessInfo {
 
-    private String processId;
+	private String processId;
     private Date startTime;
     private String command;
 
-    public RemoteProcessInfo(String id,Date startTime,String[] args){
+    public RemoteProcessInfo(String id, Date startTime, String[] args, String className){
         this.processId = id;
         this.startTime = startTime;
         StringBuilder sb = new StringBuilder();
-        for(String arg:args){
-            sb.append(arg);
+        sb.append(className + " ");
+        for(String arg : args){
+            sb.append(arg + " ");
         }
         this.command = sb.toString();
     }
-
+    
+    public String getProcessId() {
+    	return processId;
+    }
+    
+    public Date getStartTime() {
+    	return startTime;
+    }
+    
+    public String getCommand() {
+    	return command;
+    }
 
 }

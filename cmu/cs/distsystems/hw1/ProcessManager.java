@@ -3,9 +3,17 @@ package cmu.cs.distsystems.hw1;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.*;
+import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 
 
@@ -19,17 +27,19 @@ import java.util.concurrent.ExecutionException;
 
 public class ProcessManager {
 	private static final long HEART_BEAT_INTERVAL = 5000; // 5 seconds
+	private static final String PREFIX = "cmu.cs.distsystems.hw1.mp.";
 	//Keeps track of all the running processes.
 	//TODO: Make this concurrent hash map because different request handlers can
 	//simultaneously modify it.
 	private Map<String, ProcessHandle> processMap = new ConcurrentHashMap<String, ProcessHandle>();
+	private ExecutorService processExecutor;
+	
 	private String masterHost;
 	private int masterPort;
 	
 	//TODO: Decide if MasterProcessManager should be a subclass or if
 	// we should use composition.
 	protected ProcessManager() {
-		
 	}
 	
 	public ProcessManager(String masterAddress) {
@@ -70,6 +80,9 @@ public class ProcessManager {
 		
 		//TODO: register the process manager with master.
 		
+		//Instantiate the executor
+		processExecutor = Executors.newCachedThreadPool();
+		
 		//Setup the command line
 		System.out.println();
 		System.out.print(">>");
@@ -91,6 +104,11 @@ public class ProcessManager {
 					handleCommand(currInput);
 				}
 				//TODO: Check to see if any Migratable process has completed?
+				for(Entry<String, ProcessHandle> entry : processMap.entrySet()) {
+					if(entry.getValue().getRef().completed()) {
+						processMap.remove(entry.getKey());
+					}
+				}
 				
 			} catch (IOException e) {
 				//TODO Should we quit or just continue??
@@ -102,7 +120,40 @@ public class ProcessManager {
 	}
 	
 	public void handleCommand(String command) {
+		if(command.equals("ps") ) {
+			List<RemoteProcessInfo> l = getProcessInfoList();
+			
+			for(RemoteProcessInfo rp : l) {
+				System.out.println(rp.getCommand());
+			}
+		} else if (command.equals("quit"))  {
+			System.out.println("Quitting ...");
+			System.exit(0);
+		} else {
+			String[] toks = command.split(" ");
+			String mpClass = toks[0];
+			
+			String[] args = Arrays.copyOfRange(toks, 1, toks.length);
+			
+			Class clazz;
+			try {
+				clazz = Class.forName(mpClass);
+				Constructor ctor = clazz.getConstructor(String[].class);
+				Object[] varargs = {args};
+				MigratableProcess mp = (MigratableProcess) ctor.newInstance(varargs);
+				//Start a new thread.
+				Future<?> f = processExecutor.submit(mp);
+				//TODO: Do we need to sync on Concurrent HashMap?
+				processMap.put(mp.getId(), new ProcessHandle(mp, f));
+				
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				System.out.println("Invalid Migratable process - No such class");
+			}
+		}
 		
+		System.out.print(">>");
 	}
 	
 	public String printCLIHelp() {
@@ -111,16 +162,17 @@ public class ProcessManager {
 	
 	public static void main(String[] args) {
 		
-		if(args.length <= 1 || args.length > 3) {
+		if(args.length < 1 || args.length > 3) {
 			printHelp(args);
+			System.exit(0);
 		}
 		
 		ProcessManager pm;
 		
-		if (args[1].equals("--master")) {
+		if (args[0].equals("--master")) {
 			pm = new MasterProcessManager();
 			pm.start();
-        } else if(args[1].equals("-c")){
+        } else if(args[0].equals("-c")){
 			pm = new ProcessManager(args[2]);
         } else{
     		printHelp(args);

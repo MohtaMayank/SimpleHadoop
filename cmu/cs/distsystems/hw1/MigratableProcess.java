@@ -22,7 +22,7 @@ public abstract class MigratableProcess implements Runnable, Serializable {
 	private String id;
     private Date startTime;
 	
-	public MigratableProcess(String args[]) {
+	public MigratableProcess(String[] args) {
 		this.args = args;
 		this.id = this.getClass().getName() +  "_" + UUID.randomUUID();
         //If unspeicifed new Date() create the current date
@@ -79,7 +79,7 @@ public abstract class MigratableProcess implements Runnable, Serializable {
 	}
 
     public RemoteProcessInfo getProcessInfo(){
-        return new RemoteProcessInfo(this.id,this.startTime,this.args);
+        return new RemoteProcessInfo(this.id,this.startTime,this.args, this.getClass().getSimpleName());
     }
 	
 	//TODO: See specification
