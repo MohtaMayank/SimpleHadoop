@@ -17,5 +17,11 @@ public class HostInformation {
     private List<RemoteProcessInfo> remoteProcesses;
     private Date lastHeartBeat;
 
+    public HostInformation(String name,int port,List<RemoteProcessInfo> infoList,Date timeStamp){
+        this.name = name;
+        this.port = port;
+        this.remoteProcesses = infoList;
+        this.lastHeartBeat = timeStamp;
+    }
 
 }

@@ -15,5 +15,15 @@ public class RemoteProcessInfo {
     private Date startTime;
     private String command;
 
+    public RemoteProcessInfo(String id,Date startTime,String[] args){
+        this.processId = id;
+        this.startTime = startTime;
+        StringBuilder sb = new StringBuilder();
+        for(String arg:args){
+            sb.append(arg);
+        }
+        this.command = sb.toString();
+    }
+
 
 }

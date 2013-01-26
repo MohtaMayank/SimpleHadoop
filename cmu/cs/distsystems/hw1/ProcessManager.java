@@ -3,10 +3,7 @@ package cmu.cs.distsystems.hw1;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 
@@ -40,6 +37,34 @@ public class ProcessManager {
 		this.masterHost = masterAddress.split(":")[0];
 		this.masterPort = new Integer(masterAddress.split(":")[1]);
 	}
+
+    public String getMasterHost(){
+        //TODO: return the master host
+        return this.masterHost;
+    }
+
+    public int getMasterPort(){
+        //TODO: return the master port
+        return this.masterPort;
+    }
+
+    public List<RemoteProcessInfo> getProcessInfoList(){
+        List<RemoteProcessInfo> infoList = new ArrayList<RemoteProcessInfo>();
+
+        for(Map.Entry entry:processMap.entrySet()){
+            ProcessHandle ph = (ProcessHandle) entry.getValue();
+            MigratableProcess mp = ph.getRef();
+            infoList.add(mp.getProcessInfo());
+        }
+
+        return infoList;
+    }
+
+    public HostInformation getHostInformation(){
+        return new HostInformation(this.masterHost,this.masterPort,
+                this.getProcessInfoList(),new Date());
+    }
+
 	
 	public void start() {
 		

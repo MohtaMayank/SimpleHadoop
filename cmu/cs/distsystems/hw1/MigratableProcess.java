@@ -1,6 +1,7 @@
 package cmu.cs.distsystems.hw1;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.UUID;
 
 /**
@@ -10,7 +11,8 @@ import java.util.UUID;
  *
  */
 public abstract class MigratableProcess implements Runnable, Serializable {
-	private static final long serialVersionUID = -7382360393959001142L;
+
+    private static final long serialVersionUID = -7382360393959001142L;
 	
 	private volatile boolean suspend = false;
 	
@@ -18,16 +20,19 @@ public abstract class MigratableProcess implements Runnable, Serializable {
 	
 	private String[] args;
 	private String id;
+    private Date startTime;
 	
 	public MigratableProcess(String args[]) {
 		this.args = args;
 		this.id = this.getClass().getName() +  "_" + UUID.randomUUID();
+        //If unspeicifed new Date() create the current date
+        this.startTime = new Date();
 	}
 	
 	@Override
 	public void run() {
 		this.initialize();
-		
+
 		while(!suspend && hasMoreWork) {
 			this.hasMoreWork = this.doNextStep();
 		}
@@ -72,6 +77,10 @@ public abstract class MigratableProcess implements Runnable, Serializable {
 	public String getId() {
 		return id;
 	}
+
+    public RemoteProcessInfo getProcessInfo(){
+        return new RemoteProcessInfo(this.id,this.startTime,this.args);
+    }
 	
 	//TODO: See specification
 	public String toString() {
