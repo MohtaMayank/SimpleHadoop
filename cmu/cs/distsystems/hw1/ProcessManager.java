@@ -32,10 +32,15 @@ public class ProcessManager {
 	//TODO: Make this concurrent hash map because different request handlers can
 	//simultaneously modify it.
 	private Map<String, ProcessHandle> processMap = new ConcurrentHashMap<String, ProcessHandle>();
-	private ExecutorService processExecutor;
 	
 	private String masterHost;
 	private int masterPort;
+	
+	public void setMasterPort(int masterPort) {
+		this.masterPort = masterPort;
+	}
+
+	private ExecutorService processExecutor;
 	
 	//TODO: Decide if MasterProcessManager should be a subclass or if
 	// we should use composition.
@@ -106,7 +111,9 @@ public class ProcessManager {
 				//TODO: Check to see if any Migratable process has completed?
 				for(Entry<String, ProcessHandle> entry : processMap.entrySet()) {
 					if(entry.getValue().getRef().completed()) {
-						processMap.remove(entry.getKey());
+						synchronized (processMap) {
+							processMap.remove(entry.getKey());
+						}
 					}
 				}
 				
@@ -143,8 +150,11 @@ public class ProcessManager {
 				MigratableProcess mp = (MigratableProcess) ctor.newInstance(varargs);
 				//Start a new thread.
 				Future<?> f = processExecutor.submit(mp);
+				
 				//TODO: Do we need to sync on Concurrent HashMap?
-				processMap.put(mp.getId(), new ProcessHandle(mp, f));
+				synchronized(processMap) {
+					processMap.put(mp.getId(), new ProcessHandle(mp, f));
+				}
 				
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
@@ -160,6 +170,18 @@ public class ProcessManager {
 		return null;
 	}
 	
+	public Map<String, ProcessHandle> getProcessMap() {
+		return processMap;
+	}
+
+	public void setProcessMap(Map<String, ProcessHandle> processMap) {
+		this.processMap = processMap;
+	}
+
+	public void setMasterHost(String masterHost) {
+		this.masterHost = masterHost;
+	}
+
 	public static void main(String[] args) {
 		
 		if(args.length < 1 || args.length > 3) {

@@ -31,7 +31,7 @@ public class ProcessManagerServer implements Runnable {
 			serverSocket = new ServerSocket(4444);
 			while(true) {
 				Socket clientSocket = serverSocket.accept();
-				e.execute(new ProcessManagerRequestHandler(clientSocket));
+				e.execute(new ProcessManagerRequestHandler(parentPM, clientSocket));
 			}
 		} catch (Exception e) {
 			//Close the socket

@@ -1,7 +1,12 @@
 package cmu.cs.distsystems.hw1;
 
-public class TransferDetails {
+import java.io.Serializable;
 
+
+public class TransferDetails implements Serializable {
+
+	private static final long serialVersionUID = -2446403716505526453L;
+	
 	private String destHost;
 	private int destPort;
 	private String processId;
