@@ -28,4 +28,16 @@ public class HostInformation {
         return this.name;
     }
 
+    public int getPort(){
+        return this.port;
+    }
+
+    public List<RemoteProcessInfo> getProcessList(){
+        return this.remoteProcesses;
+    }
+
+    public Date getLastUpdated(){
+        return this.lastHeartBeat;
+    }
+
 }
