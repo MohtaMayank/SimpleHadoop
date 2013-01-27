@@ -4,6 +4,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
 
 public class MasterProcessManager extends ProcessManager {
 
@@ -27,9 +28,14 @@ public class MasterProcessManager extends ProcessManager {
 			e.printStackTrace();
 		}
     	
+    	//Start the MigratableProcess executor thread pool.
+    	processExecutor = Executors.newCachedThreadPool();
+    	
+    	//Start slave heart beat (Master also runs a slave to which MPs can be submitted)
+    	startHeartBeatService();
+    	
     	//Start Slave ProcessManagerServer - different thread
-		this.pmServerThread = startPMSlaveServer();
-		this.pmServerThread.start();
+		startPMSlaveServer();
 		
 		//Start Master Process Manager
 		Thread masterService = new Thread(new ProcessManagerServer

@@ -95,29 +95,26 @@ public class ProcessManager {
 		//Instantiate the executor
 		processExecutor = Executors.newCachedThreadPool();
 		
-		
 		//Start HeartBeat Thread - Connects to Master every 5 seconds and sends heartbeat message
-		this.hbThread = startHeartBeatService();
-		this.hbThread.start();
+		startHeartBeatService();
 		
 		//Start ProcessManagerServer - different thread
-		this.pmServerThread = startPMSlaveServer();
-		this.pmServerThread.start();
+		startPMSlaveServer();
 		
 		//Start CLI
 		startCLI();
 		
 	}
 	
-	public Thread startHeartBeatService() {
-		Thread hbThread = new Thread(new HeartBeatThread(this));
-		return hbThread;
+	public void startHeartBeatService() {
+		this.hbThread = new Thread(new HeartBeatThread(this));
+		this.hbThread.start();
 	}
 	
-	public Thread startPMSlaveServer() {
-		Thread pmServer = new Thread(new ProcessManagerServer(this, serverPort, 
+	public void startPMSlaveServer() {
+		this.pmServerThread = new Thread(new ProcessManagerServer(this, serverPort, 
 				ProcessManagerRequestHandler.class));
-		return pmServer;
+		this.pmServerThread.start();
 	}
 	
 	public void startCLI() {
