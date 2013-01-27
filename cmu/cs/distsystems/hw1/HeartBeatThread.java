@@ -25,7 +25,7 @@ public class HeartBeatThread implements Runnable {
 				ObjectOutputStream oos = new ObjectOutputStream( 
 						socket.getOutputStream());
 				//TODO: create a proper heart beat message.
-				oos.writeObject(parentPM.getHostInformation());
+				oos.writeObject(new Message(Message.RECIEVE_HEART_BEAT,parentPM.getHostInformation()));
 				oos.flush();
 				oos.close();
 				socket.close();

@@ -6,5 +6,11 @@ public class MasterProcessManager extends ProcessManager {
 
     public Map<String, HostInformation> slaveInfomation;
 
+    //public MasterProcessManager()
+
+    public MasterProcessManager(){
+
+    }
+
 
 }

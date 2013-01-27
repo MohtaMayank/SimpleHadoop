@@ -24,4 +24,8 @@ public class HostInformation {
         this.lastHeartBeat = timeStamp;
     }
 
+    public String getName(){
+        return this.name;
+    }
+
 }

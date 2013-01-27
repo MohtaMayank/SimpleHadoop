@@ -1,5 +1,9 @@
 package cmu.cs.distsystems.hw1;
 
+import java.io.ObjectOutput;
+import java.lang.reflect.Constructor;
+import java.security.PublicKey;
+
 /**
  * Dummy class to test git repo
  * Steps to make a git repo:
@@ -13,18 +17,30 @@ package cmu.cs.distsystems.hw1;
  *
  */
 
+class Test{
+    public Test(String[] args){
+
+    }
+}
+
+
 public class HelloWorld {
 
 	/**
 	 * @param args
 	 */
-	public static void main(String[] args) {
+	public static void main(String[] args) throws ClassNotFoundException {
 
         int i = 3;
 		System.out.println("One more test");
 		System.out.println("here");
         System.out.println("test in IntelliJ");
+        String[] ar = {"1"};
+        Test t = new Test(ar);
+        System.out.println(t.getClass().getName());
 
-	}
+        //Message
+
+    }
 
 }

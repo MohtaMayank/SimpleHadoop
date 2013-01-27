@@ -6,7 +6,13 @@ public class Message implements Serializable {
 
 	private static final long serialVersionUID = 1282157488263161069L;
 
-	String type;
+    public static final String RECIEVE_HEART_BEAT = "HeartBeat";
+    public static final String TRANSFER_PROCESS_TO = "TransferProcess";
+    public static final String RUN_PROCESS = "RunProcess";
+    public static final String CHECKPOINT_PROCESS = "CheckPointProcess";
+
+
+    String type;
 	Object objToTransfer;
 	
 	
