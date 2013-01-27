@@ -34,7 +34,7 @@ public class HeartBeatThread implements Runnable {
 				
 			}
 		} catch (Exception e) {
-			
+			e.printStackTrace();
 		}
 		
 		

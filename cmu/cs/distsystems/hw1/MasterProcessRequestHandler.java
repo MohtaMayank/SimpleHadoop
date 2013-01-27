@@ -17,9 +17,9 @@ public class MasterProcessRequestHandler extends ProcessManagerRequestHandler {
      private Class<? extends ProcessManagerRequestHandler> handlerType;
 
 
-    public MasterProcessRequestHandler(MasterProcessManager pm, Socket clientSocket){
+    public MasterProcessRequestHandler(ProcessManager pm, Socket clientSocket){
          super(pm,clientSocket);
-
+         this.parentPM = (MasterProcessManager) pm; 
      }
 
     @Override
@@ -37,13 +37,18 @@ public class MasterProcessRequestHandler extends ProcessManagerRequestHandler {
 
     public void recieveHeartBeat(Message msg){
         HostInformation slaveInfo = (HostInformation) msg.objToTransfer;
-        this.parentPM.slaveInfomation.put(slaveInfo.getName(),slaveInfo);
+        
+        synchronized (parentPM.slaveInfomation) {
+        	this.parentPM.slaveInfomation.put(slaveInfo.getId(), slaveInfo);
+		}
 
         for(Map.Entry entry:parentPM.slaveInfomation.entrySet()){
             Date now = new Date();
             HostInformation info = (HostInformation) entry.getValue();
-            if(now.getSeconds() - info.getLastUpdated().getSeconds() > 5){
-                this.parentPM.slaveInfomation.remove((String)entry.getKey());
+            if(  now.getSeconds() - info.getLastUpdated().getSeconds() > 6) {
+            	synchronized (parentPM.slaveInfomation) {
+            		this.parentPM.slaveInfomation.remove((String)entry.getKey());
+            	}
             }
         }
     }

@@ -8,8 +8,9 @@ import java.net.Socket;
 public class ProcessManagerRequestHandler implements Runnable {
 	
 	private static final String TRANSFER_PROCESS_TO = "TransferProcess";
-	private static final String RUN_PROCESS = "RunProcess";
+	private static final String RESUME_PROCESS = "ResumeProcess";
 	private static final String CHECKPOINT_PROCESS = "CheckPointProcess";
+	
 	private	Socket clientSocket;
 	private ProcessManager pm;
 	
@@ -18,20 +19,24 @@ public class ProcessManagerRequestHandler implements Runnable {
 		this.pm = pm;
 	}
 	
-	public void handleSlavePMRequest(Message msg) {
+	public boolean handleRequest(Message msg) {
 		String type = msg.getType();
 		
 		if(type.equals(TRANSFER_PROCESS_TO)){
 				TransferDetails td = (TransferDetails) msg.getObjToTransfer();
-				//TODO: Transfer
-        }else if(type.equals(RUN_PROCESS)){
-				MigratableProcess p = (MigratableProcess) msg.getObjToTransfer();
-				//TODO: resume process p.
+				transferProcess(td);
+				return true;
+        }else if(type.equals(RESUME_PROCESS)){
+				MigratableProcess mp = (MigratableProcess) msg.getObjToTransfer();
+				resumeProcess(mp);
+				return true;
         } else if(type.equals(CHECKPOINT_PROCESS)){
 				MigratableProcess p2 = (MigratableProcess) msg.getObjToTransfer();
 				//TODO: Checkpoint process p2 (save to disk)
+				return true;
 		}
 			
+		return false;
 	}
 	
 	@Override
@@ -41,15 +46,22 @@ public class ProcessManagerRequestHandler implements Runnable {
 			Message msg = (Message)ois.readObject();
 			clientSocket.close();
 			
-			handleSlavePMRequest(msg);
+			handleRequest(msg);
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
 		}
 	}
 	
+	
+	/**
+	 * Suspends the process to be transferred, creates a connection
+	 * to the host to which the transfer has to be performed and 
+	 * sends the Migratable process over.
+	 * @param td
+	 */
 	public void transferProcess(TransferDetails td) {
-		int numRetries = 0;
+		
 		//Suspend the existing thread.
 		ProcessHandle ph = null;
 		try {
@@ -79,12 +91,21 @@ public class ProcessManagerRequestHandler implements Runnable {
 			//Transfer the process to the slave host.
 			Socket sock = new Socket(td.getDestHost(), td.getDestPort());
 			ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
-			oos.writeObject(new Message(RUN_PROCESS, ph.getRef()));
+			oos.writeObject(new Message(RESUME_PROCESS, ph.getRef()));
 			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
+	}
+	
+	/**
+	 * Resume the process mp on this host.
+	 * @param mp
+	 */
+	public void resumeProcess(MigratableProcess mp) {
+		mp.resume();
+		pm.execute(mp);
 	}
 
 }

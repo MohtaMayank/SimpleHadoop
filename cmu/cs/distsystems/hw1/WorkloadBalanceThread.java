@@ -38,7 +38,8 @@ public class WorkloadBalanceThread implements Runnable{
                 }
                 continue;
             }
-
+            
+            //TODO: return a list of things to balance
             TransferChoice choice = strategy.processToTransfer();
 
             if(choice == null) continue;

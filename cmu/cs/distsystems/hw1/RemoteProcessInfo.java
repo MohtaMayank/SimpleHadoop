@@ -1,5 +1,6 @@
 package cmu.cs.distsystems.hw1;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
@@ -9,7 +10,9 @@ import java.util.Date;
  * Time: 2:30 PM
  * To change this template use File | Settings | File Templates.
  */
-public class RemoteProcessInfo {
+public class RemoteProcessInfo implements Serializable {
+	
+	private static final long serialVersionUID = 8304666196580654805L;
 
 	private String processId;
     private Date startTime;

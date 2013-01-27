@@ -39,13 +39,14 @@ public class SimpleBalanceStrategy extends AbstractBalanceStrategy {
             if(workload > maxJob) {
                 maxJob = workload;
                 mostWork = info;
-            } else if(workload < minJob){
+            } 
+            if(workload < minJob){
                 minJob = workload;
                 leastWork = info;
             }
         }
 
-        if(leastWork != null && mostWork != null){
+        if(maxJob > (minJob + 1) && mostWork != leastWork && mostWork != null && leastWork != null){
             String processID = mostWork.getProcessList().get(0).getProcessId();
             return new TransferChoice(mostWork,leastWork,processID);
         }

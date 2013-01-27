@@ -3,7 +3,11 @@ package cmu.cs.distsystems.hw1;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.ObjectOutputStream;
 import java.lang.reflect.Constructor;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -14,6 +18,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+
+import com.sun.org.apache.xalan.internal.xsltc.compiler.sym;
 
 
 
@@ -31,26 +37,27 @@ public class ProcessManager {
 	//Keeps track of all the running processes.
 	//TODO: Make this concurrent hash map because different request handlers can
 	//simultaneously modify it.
-	private Map<String, ProcessHandle> processMap = new ConcurrentHashMap<String, ProcessHandle>();
+	volatile Map<String, ProcessHandle> processMap = new ConcurrentHashMap<String, ProcessHandle>();
+	volatile ExecutorService processExecutor;
 	
-	private String masterHost;
-	private int masterPort;
+	String masterHost;
+	int masterPort;
+	int serverPort;
 	
-	public void setMasterPort(int masterPort) {
-		this.masterPort = masterPort;
-	}
-
-	private ExecutorService processExecutor;
+	//Deamon Thread references;
+	Thread hbThread;
+	Thread pmServerThread;
 	
 	//TODO: Decide if MasterProcessManager should be a subclass or if
 	// we should use composition.
 	protected ProcessManager() {
 	}
 	
-	public ProcessManager(String masterAddress) {
+	public ProcessManager(String masterHost, int masterPort, int serverPort) {
 		//TODO: what if address not in correct format.
-		this.masterHost = masterAddress.split(":")[0];
-		this.masterPort = new Integer(masterAddress.split(":")[1]);
+		this.masterHost = masterHost;
+		this.masterPort = masterPort;
+		this.serverPort = serverPort;
 	}
 
     public String getMasterHost(){
@@ -66,7 +73,7 @@ public class ProcessManager {
     public List<RemoteProcessInfo> getProcessInfoList(){
         List<RemoteProcessInfo> infoList = new ArrayList<RemoteProcessInfo>();
 
-        for(Map.Entry entry:processMap.entrySet()){
+        for(Entry entry:processMap.entrySet()){
             ProcessHandle ph = (ProcessHandle) entry.getValue();
             MigratableProcess mp = ph.getRef();
             infoList.add(mp.getProcessInfo());
@@ -76,8 +83,8 @@ public class ProcessManager {
     }
 
     public HostInformation getHostInformation(){
-        return new HostInformation(this.masterHost,this.masterPort,
-                this.getProcessInfoList(),new Date());
+		return new HostInformation("localhost" ,this.serverPort,
+			        this.getProcessInfoList(),new Date());
     }
 
 	
@@ -88,22 +95,42 @@ public class ProcessManager {
 		//Instantiate the executor
 		processExecutor = Executors.newCachedThreadPool();
 		
-		//Setup the command line
-		System.out.println();
-		System.out.print(">>");
-		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-		String currInput;
 		
 		//Start HeartBeat Thread - Connects to Master every 5 seconds and sends heartbeat message
+		this.hbThread = startHeartBeatService();
+		this.hbThread.start();
+		
+		//Start ProcessManagerServer - different thread
+		this.pmServerThread = startPMSlaveServer();
+		this.pmServerThread.start();
+		
+		//Start CLI
+		startCLI();
+		
+	}
+	
+	public Thread startHeartBeatService() {
 		Thread hbThread = new Thread(new HeartBeatThread(this));
-		hbThread.start();
-		
-		//Start ProcessManagerServer
-		Thread pmServer = new Thread(new ProcessManagerServer(this));
-		pmServer.start();
-		
-		while(true) {
-			try {
+		return hbThread;
+	}
+	
+	public Thread startPMSlaveServer() {
+		Thread pmServer = new Thread(new ProcessManagerServer(this, serverPort, 
+				ProcessManagerRequestHandler.class));
+		return pmServer;
+	}
+	
+	public void startCLI() {
+		try {
+			System.out.println("Slave process manager started on host " + 
+					InetAddress.getLocalHost().getHostName() + ":" + serverPort);
+			
+			//Setup the command line
+			System.out.println();
+			System.out.print(">>");
+			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+			String currInput;
+			while(true) {
 				if(br.ready()) {
 					currInput = br.readLine();
 					handleCommand(currInput);
@@ -117,13 +144,11 @@ public class ProcessManager {
 					}
 				}
 				
-			} catch (IOException e) {
-				//TODO Should we quit or just continue??
-				e.printStackTrace();
 			}
+		} catch (IOException e) {
+			//TODO Should we quit or just continue??
+			e.printStackTrace();
 		}
-		
-		
 	}
 	
 	public void handleCommand(String command) {
@@ -136,6 +161,29 @@ public class ProcessManager {
 		} else if (command.equals("quit"))  {
 			System.out.println("Quitting ...");
 			System.exit(0);
+		} else if (command.contains("-transfer")) {
+			//THIS IS JUST FOR TESTING TILL MASTER IS READY.
+			String[] commandToks = command.split(" ");
+			try {
+				String fromHostName = commandToks[1];
+				int fromHostPort =  Integer.parseInt(commandToks[2]);
+				
+				String toHostName = commandToks[3];
+				int toHostPort =  Integer.parseInt(commandToks[4]);
+				
+				String pId = commandToks[5];
+				
+				Socket sock = new Socket(fromHostName, fromHostPort);
+				ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
+				TransferDetails td = new TransferDetails(toHostName, toHostPort, pId);
+				oos.writeObject(new Message(Message.TRANSFER_PROCESS_TO, td));
+				
+				sock.close();
+				
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			
 		} else {
 			String[] toks = command.split(" ");
 			String mpClass = toks[0];
@@ -148,14 +196,8 @@ public class ProcessManager {
 				Constructor ctor = clazz.getConstructor(String[].class);
 				Object[] varargs = {args};
 				MigratableProcess mp = (MigratableProcess) ctor.newInstance(varargs);
-				//Start a new thread.
-				Future<?> f = processExecutor.submit(mp);
-				
-				//TODO: Do we need to sync on Concurrent HashMap?
-				synchronized(processMap) {
-					processMap.put(mp.getId(), new ProcessHandle(mp, f));
-				}
-				
+				System.out.println("Starting new process with Id: " + mp.getId());
+				execute(mp);
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -173,42 +215,21 @@ public class ProcessManager {
 	public Map<String, ProcessHandle> getProcessMap() {
 		return processMap;
 	}
-
-	public void setProcessMap(Map<String, ProcessHandle> processMap) {
-		this.processMap = processMap;
-	}
-
-	public void setMasterHost(String masterHost) {
-		this.masterHost = masterHost;
-	}
-
-	public static void main(String[] args) {
-		
-		if(args.length < 1 || args.length > 3) {
-			printHelp(args);
-			System.exit(0);
+	
+	public void execute(MigratableProcess mp) {
+		//Start a new thread.
+		Future<?> f;
+		synchronized (processExecutor) {
+			f = processExecutor.submit(mp);
 		}
-		
-		ProcessManager pm;
-		
-		if (args[0].equals("--master")) {
-			pm = new MasterProcessManager();
-			pm.start();
-        } else if(args[0].equals("-c")){
-			pm = new ProcessManager(args[2]);
-        } else{
-    		printHelp(args);
+		//TODO: Do we need to sync on Concurrent HashMap?
+		synchronized(processMap) {
+			processMap.put(mp.getId(), new ProcessHandle(mp, f));
 		}
-		
-		
 	}
 	
-	public static void printHelp(String[] args) {
-		System.out.println("Invalid input arguments. Usage:");
-		System.out.println(" --master : Indicates that the host is master");
-		System.out.println(" OR ");
-		System.out.println(" -c <hostname:port> : Indicates that the host is" +
-				" a slave and <hostname:port> is where master is running.");
+	public synchronized void suspend(String processId) {
+		
 	}
-	
+
 }

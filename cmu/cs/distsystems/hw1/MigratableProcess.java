@@ -38,9 +38,6 @@ public abstract class MigratableProcess implements Runnable, Serializable {
 		}
 	}
 	
-	public void suspend() {
-		suspend = true;
-	}
 
 	/**
 	 * This method should be able to initialize the 
@@ -69,7 +66,14 @@ public abstract class MigratableProcess implements Runnable, Serializable {
 	public boolean completed() {
 		return !hasMoreWork;
 	}
+	public void suspend() {
+		suspend = true;
+	}
 	
+	public void resume() {
+		// TODO Auto-generated method stub
+		suspend = false;
+	}
 	/**
 	 * Returns a unique identifier by which the process can be identified 
 	 * @return
@@ -111,5 +115,6 @@ public abstract class MigratableProcess implements Runnable, Serializable {
 			return false;
 		return true;
 	}
+
 	
 }

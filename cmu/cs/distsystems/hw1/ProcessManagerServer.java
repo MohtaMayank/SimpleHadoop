@@ -21,11 +21,13 @@ public class ProcessManagerServer implements Runnable {
 
 	private ProcessManager parentPM;
     private Class<? extends ProcessManagerRequestHandler> handlerType;
+    private int port;
 	
-	public ProcessManagerServer(ProcessManager parentPM,
+	public ProcessManagerServer(ProcessManager parentPM, int serverPort,
                                 Class<? extends ProcessManagerRequestHandler> handlerType){
 		this.parentPM = parentPM;
         this.handlerType = handlerType;
+        this.port = serverPort;
 	}
 
     public ProcessManagerRequestHandler getNewHandler (ProcessManager pm, Socket client){
@@ -35,15 +37,15 @@ public class ProcessManagerServer implements Runnable {
             ctor = handlerType.getConstructor(ProcessManager.class, Socket.class);
             Object[] varargs = {pm,client};
             ProcessManagerRequestHandler pmrh = (ProcessManagerRequestHandler) ctor.newInstance(varargs);
-
-            } catch (InstantiationException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-            } catch (InvocationTargetException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates
-            } catch (NoSuchMethodException e) {
+            return pmrh;
+        } catch (InstantiationException e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates
+        } catch (NoSuchMethodException e) {
+        	e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
 
         return null;
@@ -55,25 +57,20 @@ public class ProcessManagerServer implements Runnable {
 		ServerSocket serverSocket = null;
 		try {
 			Executor e = Executors.newCachedThreadPool(); 
-			serverSocket = new ServerSocket(4444);
+			serverSocket = new ServerSocket(port);
 			while(true) {
-				Socket clientSocket = serverSocket.accept();
-				e.execute(this.getNewHandler(parentPM, clientSocket));
-			}
-		} catch (Exception e) {
-			//Close the socket
-			if(serverSocket != null) {
 				try {
-					serverSocket.close();
-				} catch (IOException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
+					Socket clientSocket = serverSocket.accept();
+					e.execute(this.getNewHandler(parentPM, clientSocket));
+				} catch (Exception exc) {
+					exc.printStackTrace();
+				} 
 			}
+		} catch(Exception e) {
 			e.printStackTrace();
 		}
-
 	}
+
 
 	/**
 	 * @param args

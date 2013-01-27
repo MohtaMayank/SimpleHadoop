@@ -1,5 +1,6 @@
 package cmu.cs.distsystems.hw1;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 
@@ -10,9 +11,11 @@ import java.util.List;
  * Time: 2:29 PM
  * To change this template use File | Settings | File Templates.
  */
-public class HostInformation {
+public class HostInformation implements Serializable {
 
-    private String name;
+	private static final long serialVersionUID = 9070460687530184794L;
+
+	private String name;
     private int port;
     private List<RemoteProcessInfo> remoteProcesses;
     private Date lastHeartBeat;
@@ -22,6 +25,10 @@ public class HostInformation {
         this.port = port;
         this.remoteProcesses = infoList;
         this.lastHeartBeat = timeStamp;
+    }
+    
+    public String getId() {
+    	return name + ":" + port;
     }
 
     public String getName(){
