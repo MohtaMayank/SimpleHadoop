@@ -43,4 +43,9 @@ public class SimpleMigratableProcess extends MigratableProcess {
 		System.out.println((new SimpleMigratableProcess(args)).getClass().getName());
 	}
 
+	@Override
+	public AFFINITY getAffinity() {
+		return AFFINITY.WEAK;
+	}
+
 }

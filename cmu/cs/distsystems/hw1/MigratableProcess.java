@@ -13,7 +13,11 @@ import java.util.UUID;
 public abstract class MigratableProcess implements Runnable, Serializable {
 
     private static final long serialVersionUID = -7382360393959001142L;
-	
+
+    public enum AFFINITY {
+    	WEAK, MEDIUM, STRONG
+    }
+    
 	private volatile boolean suspend = false;
 	
 	private volatile boolean hasMoreWork = true;
@@ -60,6 +64,15 @@ public abstract class MigratableProcess implements Runnable, Serializable {
 	public abstract boolean doNextStep();
 	
 	/**
+	 * Each Migratable proccess should define an affinity. Affinity 
+	 * is the reluctance of a process to move. 
+	 * Affinity will help Master process manager in load balancing. 
+	 * Master process manager should give less preference migrate 
+	 * process with high affinity
+	 */
+	public abstract AFFINITY getAffinity();
+	
+	/**
 	 * Function to check if the MigratableProcess is complete.
 	 * @return true if entire work is completed, false otherwise.
 	 */
@@ -69,7 +82,6 @@ public abstract class MigratableProcess implements Runnable, Serializable {
 	public void suspend() {
 		suspend = true;
 	}
-	
 	public void resume() {
 		// TODO Auto-generated method stub
 		suspend = false;

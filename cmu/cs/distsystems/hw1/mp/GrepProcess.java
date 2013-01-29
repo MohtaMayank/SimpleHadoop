@@ -1,9 +1,14 @@
-package cmu.cs.distsystems.hw1;
+package cmu.cs.distsystems.hw1.mp;
 
 import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.PrintStream;
+
+import cmu.cs.distsystems.hw1.MigratableProcess;
+import cmu.cs.distsystems.hw1.TransactionalFileInputStream;
+import cmu.cs.distsystems.hw1.TransactionalFileOutputStream;
+import cmu.cs.distsystems.hw1.MigratableProcess.AFFINITY;
 
 public class GrepProcess extends MigratableProcess {
 
@@ -33,6 +38,12 @@ public class GrepProcess extends MigratableProcess {
 	public boolean doNextStep() {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	@Override
+	public AFFINITY getAffinity() {
+		// TODO Auto-generated method stub
+		return AFFINITY.MEDIUM;
 	}
 
 }
