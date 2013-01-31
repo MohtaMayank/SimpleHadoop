@@ -26,8 +26,8 @@ public class NaiveWebCrawler extends MigratableProcess{
     private Queue<String> URLQueue;
     private HashSet<String> visted;
     private TransactionalFileOutputStream parsedResults;
-    public final static String titlePattern = "<title>(.*)</title>";
-    public final static String htmlPattern = "http://([^\"']*)";
+    public final static String titlePattern = "<title>([^<]*)</title>";
+    public final static String htmlPattern = "http://([^\\.])*\\.cmu\\.edu([^\"])*";
 
 
     public NaiveWebCrawler(String[] args){
@@ -56,8 +56,8 @@ public class NaiveWebCrawler extends MigratableProcess{
 
             return sb.toString();
 
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            //e.printStackTrace();
             return "";
         }
     }
@@ -85,8 +85,11 @@ public class NaiveWebCrawler extends MigratableProcess{
         Matcher m = p.matcher(doc);
 
         if(m.find()){
-            MatchResult mr = m.toMatchResult();
-            return doc.substring(mr.start(),mr.end());
+            String title = m.group(1);
+            //MatchResult mr = m.toMatchResult();
+            //return doc.substring(mr.start(),mr.end());
+            return title.replace("[\t\n]","");
+
         }
 
         return "";
@@ -115,7 +118,10 @@ public class NaiveWebCrawler extends MigratableProcess{
         List<String> newUrls = extractURLs(page);
 
         this.URLQueue.addAll(newUrls);
-        this.saveParsedDocuments(content);
+
+        if(!content.equals("")){
+            this.saveParsedDocuments(content);
+        }
 
         return true;
     }
