@@ -183,7 +183,7 @@ public class ProcessManager {
 			
 		} else {
 			String[] toks = command.split(" ");
-			String mpClass = toks[0];
+			String mpClass = PREFIX + toks[0];
 			
 			String[] args = Arrays.copyOfRange(toks, 1, toks.length);
 			
