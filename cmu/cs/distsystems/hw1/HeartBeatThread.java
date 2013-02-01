@@ -1,5 +1,6 @@
 package cmu.cs.distsystems.hw1;
 
+import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -18,9 +19,10 @@ public class HeartBeatThread implements Runnable {
 
 	@Override
 	public void run() {
+		Socket socket = null;
 		try {
 			while(true) {
-				Socket socket = new Socket(this.parentPM.getMasterHost(),
+				socket = new Socket(this.parentPM.getMasterHost(),
                         this.parentPM.getMasterPort());
 				ObjectOutputStream oos = new ObjectOutputStream( 
 						socket.getOutputStream());
@@ -35,6 +37,13 @@ public class HeartBeatThread implements Runnable {
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
+		} finally {
+			try {
+				socket.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 		
 		

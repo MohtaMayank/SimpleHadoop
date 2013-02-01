@@ -40,6 +40,7 @@ public class NaiveBayesClassifier extends MigratableProcess {
 	
 	private String currentStep;
 	
+	private int waitSeconds = 0;
 	
 	public NaiveBayesClassifier(String[] args) {
 		super(args);
@@ -52,6 +53,10 @@ public class NaiveBayesClassifier extends MigratableProcess {
 		this.testResults = new ArrayList<NBTestResult>();
 		this.outputFile = args[2];
 		this.currentStep = TRAIN_STEP;
+		
+		if(args.length == 4) {
+			this.waitSeconds = Integer.parseInt(args[3]);
+		}
 		
 	}
 
@@ -70,55 +75,47 @@ public class NaiveBayesClassifier extends MigratableProcess {
 	}
 
 	@Override
-	public boolean doNextStep() {
-		// TODO Auto-generated method stub
+	public boolean doNextStep() throws Exception{
+		
+		boolean notFinished = true;
 		
 		if(currentStep.equals(TRAIN_STEP)) {
-			try {
-				DataInputStream dis = new DataInputStream(trainFile);
-				String doc = dis.readLine();
-				if(doc != null) {
-					train(doc);
-				} else {
-					//reached end of training stage - start testing
-					this.currentStep = TEST_STEP;
-				}
-				
-			} catch (IOException e) {
-				//Log in correct log.
-				e.printStackTrace();
-				//On exception in reading stop training.
+			DataInputStream dis = new DataInputStream(trainFile);
+			String doc = dis.readLine();
+			if(doc != null) {
+				train(doc);
+			} else {
+				//reached end of training stage - start testing
 				this.currentStep = TEST_STEP;
 			}
 			
-			return true;
+			notFinished = true;
 		} else if (currentStep.equals(TEST_STEP)) {
-			try {
-				DataInputStream dis = new DataInputStream(testFile);
-				String doc = dis.readLine();
-				if(doc != null) {
-					test(doc);
-				} else {
-					//reached end of training stage - start testing
-					this.currentStep = PRINT_RESULT_STEP;
-				}
-				
-			} catch (IOException e) {
-				//Log in correct log.
-				e.printStackTrace();
-				//On exception in reading stop training.
+			DataInputStream dis = new DataInputStream(testFile);
+			String doc = dis.readLine();
+			if(doc != null) {
+				test(doc);
+			} else {
+				//reached end of training stage - start testing
 				this.currentStep = PRINT_RESULT_STEP;
+				
 			}
 
-			return true;
+			notFinished = true;
 		} else if (currentStep.equals(PRINT_RESULT_STEP)) {
 			printResult();
 			currentStep = "END";
-			return true;
+			notFinished = true;
 		} else {
 			return false;
 		}
 		
+		
+		if(waitSeconds > 0) {
+			Thread.sleep(waitSeconds*1000);
+		}
+		
+		return notFinished;
 	}
 	
 	public void train(String currDoc) {
@@ -207,22 +204,17 @@ public class NaiveBayesClassifier extends MigratableProcess {
 	}
 	
 	//Currently this step is not being distributed.
-	public void printResult() {
+	public void printResult() throws Exception {
 		BufferedWriter bw;
-		try {
-			bw = new BufferedWriter(new FileWriter(new File(outputFile)));
-			for(NBTestResult n : testResults ) {
-				bw.write(n.getTrueClass() + "\t" + n.getClassifiedAs() + "\n");
-			}
-			bw.write("Percent correct:" + numCorrect + 
-					"/" + testResults.size() + "=" + numCorrect/(double)testResults.size());
-			
-			bw.flush();
-			bw.close();
-			
-		} catch (IOException e) {
-			e.printStackTrace();
+		bw = new BufferedWriter(new FileWriter(new File(outputFile)));
+		for(NBTestResult n : testResults ) {
+			bw.write(n.getTrueClass() + "\t" + n.getClassifiedAs() + "\n");
 		}
+		bw.write("Percent correct:" + numCorrect + 
+				"/" + testResults.size() + "=" + numCorrect/(double)testResults.size());
+		
+		bw.flush();
+		bw.close();
 	}
 	
 	@Override

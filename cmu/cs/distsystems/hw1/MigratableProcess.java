@@ -36,9 +36,16 @@ public abstract class MigratableProcess implements Runnable, Serializable {
 	@Override
 	public void run() {
 		this.initialize();
-
+		
 		while(!suspend && hasMoreWork) {
-			this.hasMoreWork = this.doNextStep();
+			try {
+				this.hasMoreWork = this.doNextStep();
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.out.println("EXCEPTION IN PROCESS " + getId() 
+						+ " \n Quiting the process ... \n");
+				this.hasMoreWork = false;
+			}
 		}
 	}
 	
@@ -61,7 +68,7 @@ public abstract class MigratableProcess implements Runnable, Serializable {
 	 * 
 	 * @return : true, if there is more work remaining, false otherwise. 
 	 */
-	public abstract boolean doNextStep();
+	public abstract boolean doNextStep() throws Exception;
 	
 	/**
 	 * Each Migratable proccess should define an affinity. Affinity 

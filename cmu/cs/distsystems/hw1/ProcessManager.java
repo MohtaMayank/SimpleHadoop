@@ -19,8 +19,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import com.sun.org.apache.xalan.internal.xsltc.compiler.sym;
-
 
 
 /**
@@ -83,7 +81,14 @@ public class ProcessManager {
     }
 
     public HostInformation getHostInformation(){
-		return new HostInformation("localhost" ,this.serverPort,
+    	String hostAddr = "";
+		try {
+			hostAddr = InetAddress.getLocalHost().getHostAddress();
+		} catch (UnknownHostException e) {
+			//Ignore
+		}
+    	
+		return new HostInformation(hostAddr ,this.serverPort,
 			        this.getProcessInfoList(),new Date());
     }
 
@@ -120,7 +125,7 @@ public class ProcessManager {
 	public void startCLI() {
 		try {
 			System.out.println("Slave process manager started on host " + 
-					InetAddress.getLocalHost().getHostName() + ":" + serverPort);
+					InetAddress.getLocalHost().getHostAddress() + ":" + serverPort);
 			
 			//Setup the command line
 			System.out.println();
@@ -128,9 +133,17 @@ public class ProcessManager {
 			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 			String currInput;
 			while(true) {
+				
 				if(br.ready()) {
 					currInput = br.readLine();
-					handleCommand(currInput);
+					if(currInput.length() < 2) {
+						System.out.print(">>");
+						continue;
+					} else {
+						handleCommand(currInput);
+						System.out.print("\n>>");
+						System.out.println("Thread count = " + Thread.getAllStackTraces().size());
+					}
 				}
 				//TODO: Check to see if any Migratable process has completed?
 				for(Entry<String, ProcessHandle> entry : processMap.entrySet()) {
@@ -148,12 +161,18 @@ public class ProcessManager {
 		}
 	}
 	
+	/**
+	 * @param command
+	 */
 	public void handleCommand(String command) {
 		if(command.equals("ps") ) {
 			List<RemoteProcessInfo> l = getProcessInfoList();
 			
 			for(RemoteProcessInfo rp : l) {
 				System.out.println(rp.getCommand());
+			}
+			if(l != null) {
+				System.out.println("Total processes: " + l.size());
 			}
 		} else if (command.equals("quit"))  {
 			System.out.println("Quitting ...");
@@ -197,12 +216,10 @@ public class ProcessManager {
 				execute(mp);
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
-				e.printStackTrace();
 				System.out.println("Invalid Migratable process - No such class");
 			}
 		}
 		
-		System.out.print(">>");
 	}
 	
 	public String printCLIHelp() {

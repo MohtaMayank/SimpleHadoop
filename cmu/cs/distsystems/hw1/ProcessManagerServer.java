@@ -61,6 +61,7 @@ public class ProcessManagerServer implements Runnable {
 			while(true) {
 				try {
 					Socket clientSocket = serverSocket.accept();
+					//System.out.println("Creating new thread");
 					e.execute(this.getNewHandler(parentPM, clientSocket));
 				} catch (Exception exc) {
 					exc.printStackTrace();

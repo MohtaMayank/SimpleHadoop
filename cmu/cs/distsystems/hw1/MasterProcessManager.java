@@ -21,15 +21,31 @@ public class MasterProcessManager extends ProcessManager {
     public void start() {
     	
     	try {
-			System.out.println("Starting Master PM on " + InetAddress.getLocalHost().getHostName()
+			System.out.println("Starting Master PM on " + InetAddress.getLocalHost().getHostAddress()
 					+ ":" + 4444);
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
     	
+    	//Start Master Process Manager
+    	Thread masterService = new Thread(new ProcessManagerServer
+    			( this, 4444, MasterProcessRequestHandler.class) );
+    	masterService.start();
+    	
+    	//Start Work Balancer Server
+    	SimpleBalanceStrategy strategy = new SimpleBalanceStrategy(this);
+    	Thread loadBalancer = new Thread(new WorkloadBalanceThread(this, strategy));
+    	loadBalancer.start();
     	//Start the MigratableProcess executor thread pool.
     	processExecutor = Executors.newCachedThreadPool();
+    	
+    	//Just sleep for some time to ensure master has started.
+    	try {
+			Thread.sleep(100);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
     	
     	//Start slave heart beat (Master also runs a slave to which MPs can be submitted)
     	startHeartBeatService();
@@ -37,15 +53,6 @@ public class MasterProcessManager extends ProcessManager {
     	//Start Slave ProcessManagerServer - different thread
 		startPMSlaveServer();
 		
-		//Start Master Process Manager
-		Thread masterService = new Thread(new ProcessManagerServer
-				( this, 4444, MasterProcessRequestHandler.class) );
-		masterService.start();
-		
-		//Start Work Balancer Server
-		SimpleBalanceStrategy strategy = new SimpleBalanceStrategy(this);
-		Thread loadBalancer = new Thread(new WorkloadBalanceThread(this, strategy));
-		loadBalancer.start();
 		
 		//Start CLI
 		startCLI();

@@ -86,15 +86,24 @@ public class ProcessManagerRequestHandler implements Runnable {
 		}
 		
 		//TODO: Add retries??
+		Socket sock = null;
 		try  {
-			
 			//Transfer the process to the slave host.
-			Socket sock = new Socket(td.getDestHost(), td.getDestPort());
+			sock = new Socket(td.getDestHost(), td.getDestPort());
 			ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
 			oos.writeObject(new Message(RESUME_PROCESS, ph.getRef()));
-			
+			sock.close();
 		} catch (Exception e) {
 			e.printStackTrace();
+		} finally {
+			if(sock != null) {
+				try {
+					sock.close();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
 		}
 		
 	}
