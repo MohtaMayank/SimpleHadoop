@@ -46,7 +46,8 @@ public class HostInformation implements Serializable {
     public Date getLastUpdated(){
         return this.lastHeartBeat;
     }
-    
+
+
     @Override
 	public int hashCode() {
 		final int prime = 31;

@@ -1,5 +1,8 @@
 package cmu.cs.distsystems.hw1;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * Created with IntelliJ IDEA.
  * User: mimighostipad
@@ -13,15 +16,20 @@ package cmu.cs.distsystems.hw1;
 public abstract class AbstractBalanceStrategy {
 
     protected MasterProcessManager masterPM;
+    protected Map<String, HostInformation> localInfo;
+
+
 
     public AbstractBalanceStrategy(MasterProcessManager masterPM){
         this.masterPM = masterPM;
+
     }
 
     public abstract boolean isBalanced();
     //public abstract HostInformation pickLeast();
     //public abstract HostInformation pickMost();
     public abstract TransferChoice processToTransfer();
+    //public abstract List<TransferChoice> processesToTransfer();
 
 
 }

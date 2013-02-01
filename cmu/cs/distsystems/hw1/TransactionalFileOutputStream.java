@@ -43,7 +43,7 @@ public class TransactionalFileOutputStream extends java.io.OutputStream implemen
 			//TODO: Should we "rwd" mode?
 			raf = new RandomAccessFile(f, "rwd");
 			raf.seek(f.length());
-			System.out.println(f.length());
+			//System.out.println(f.length());
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

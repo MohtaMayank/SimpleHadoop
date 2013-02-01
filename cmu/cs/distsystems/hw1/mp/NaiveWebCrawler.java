@@ -13,8 +13,10 @@ import cmu.cs.distsystems.hw1.TransactionalFileInputStream;
 import cmu.cs.distsystems.hw1.TransactionalFileOutputStream;
 
 import java.io.*;
+import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.*;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
@@ -139,6 +141,12 @@ public class NaiveWebCrawler extends MigratableProcess{
         System.out.println(content);
         nwc.extractURLs(nwc.fetchPage("http://www.cmu.edu"));
         nwc.saveParsedDocuments(content);
+
+        try {
+            System.out.println(InetAddress.getLocalHost().getHostAddress());
+        } catch (UnknownHostException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
 
 
     }
