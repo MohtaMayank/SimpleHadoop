@@ -1,20 +1,29 @@
 package cmu.cs.distsystems.hw2;
 
-import java.io.IOException;
+import java.io.Serializable;
 
-public class ReturnMessage {
+
+public class ReturnMessage implements Serializable {
+	private static final long serialVersionUID = -3940254925429376099L;
 	
 	Object returnVal;
 	boolean isException;
 	
-	//For testing
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
+	private ReturnMessage() {
 		
 	}
 	
-	//Type
-	public static void exception() throws Exception {
-		
+	public ReturnMessage(Object returnVal, boolean isException) {
+		this.isException = isException;
+		this.returnVal = returnVal;
 	}
+	
+	public Object getReturnVal() {
+		return returnVal;
+	}
+
+	public boolean isException() {
+		return isException;
+	}
+	
 }
