@@ -19,7 +19,6 @@ public class SimpleClient {
             ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
             oos.writeObject(imsg);
             oos.flush();
-            //oos.close();
 
             ObjectInputStream ois = new ObjectInputStream(sock.getInputStream());
             ReturnMessage rm = (ReturnMessage) ois.readObject();
