@@ -8,11 +8,7 @@ public class ReturnMessage implements Serializable {
 	
 	Object returnVal;
 	boolean isException;
-	
-	private ReturnMessage() {
-		
-	}
-	
+
 	public ReturnMessage(Object returnVal, boolean isException) {
 		this.isException = isException;
 		this.returnVal = returnVal;

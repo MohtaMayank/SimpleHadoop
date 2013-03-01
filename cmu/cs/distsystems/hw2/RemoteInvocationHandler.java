@@ -32,7 +32,6 @@ public class RemoteInvocationHandler implements InvocationHandler {
 
         InvocationMessage imsg = new InvocationMessage(objId,method.getName(),objects);
 
-
         Socket sock = null;
 
         try{

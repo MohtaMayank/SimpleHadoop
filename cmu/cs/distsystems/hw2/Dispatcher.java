@@ -1,7 +1,18 @@
 package cmu.cs.distsystems.hw2;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.rmi.Remote;
 import java.util.HashMap;
+import java.util.Locale;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 /**
  * 
@@ -26,6 +37,7 @@ public class Dispatcher {
 		this.port = port;
 		this.localRefTable = new HashMap<String, Remote>();
 	}
+
 	
 	/**
 	 * 
@@ -36,9 +48,13 @@ public class Dispatcher {
 	 * @return: After registering in the local table, an ror is created and returned. 
 	 * This can be used for registering with the rmi registry.
 	 */
-	public RemoteObjectRef exportRemoteObject(String id, String remoteInterface, Remote obj) {
-		
-		return null;
+	public RemoteObjectRef exportRemoteObject(String id, String remoteInterface, Remote obj) throws UnknownHostException {
+
+        this.localRefTable.put(id,obj);
+        String ip = InetAddress.getLocalHost().getHostAddress();
+
+
+		return new RemoteObjectRef(ip,this.port,id,remoteInterface);
 	}
 	
 	
@@ -51,7 +67,33 @@ public class Dispatcher {
 	 * object and creates replies back to the requester with the results. 
 	 */
 	public void serve() {
-		
+
+        ServerSocket serverSock = null;
+        Executor executor = Executors.newCachedThreadPool();
+        try {
+            serverSock = new ServerSocket(port);
+            String ip = InetAddress.getLocalHost().getHostAddress();
+            System.out.println(ip);
+            while(true){
+                try {
+
+                    Socket client = serverSock.accept();
+                    ObjectInputStream ois = new ObjectInputStream(client.getInputStream());
+                    InvocationMessage imsg = (InvocationMessage) ois.readObject();
+
+                    Remote obj = localRefTable.get(imsg.objectId);
+                    executor.execute(new ExecutionHandler(imsg,obj,client));
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
 	}
 
 }
