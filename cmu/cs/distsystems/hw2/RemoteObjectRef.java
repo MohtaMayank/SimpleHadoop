@@ -1,5 +1,10 @@
 package cmu.cs.distsystems.hw2;
 
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+
+
 public class RemoteObjectRef
 {
 
@@ -17,19 +22,16 @@ public class RemoteObjectRef
 
     // this method is important, since it is a stub creator.
     // 
-    Object localise() {
+    Object localise() throws ClassNotFoundException {
 		// Implement this as you like: essentially you should 
 		// create a new stub object and returns it.
 		// Assume the stub class has the name e.g.
-		//
-		//       Remote_Interface_Name + "_stub".
 		//
 		// Then you can create a new stub as follows:
 		// 
 	    //USE PROXY CODE HERE
 		//       Class c = Class.forName(Remote_Interface_Name + "_stub");
 		//       Object o = c.newinstance()
-	    	
 		//
 		// For this to work, your stub should have a constructor without arguments.
 		// You know what it does when it is called: it gives communication module
@@ -37,7 +39,18 @@ public class RemoteObjectRef
 		// arguments etc., in a marshalled form, and CM (yourRMI) sends it out to 
 		// another place. 
 		// Here let it return null.
-		return null;
+
+        InvocationHandler handler =
+                new RemoteInvocationHandler(this.ipAddr,this.port,this.objectId);
+
+        Class clazz = Class.forName(this.remoteInterfaceName);
+
+        Object proxy =  Proxy.newProxyInstance(
+                clazz.getClassLoader(),
+                new Class[]{clazz},
+                handler);
+
+        return proxy;
     }
     
     public String getIpAddr() {
