@@ -52,8 +52,7 @@ public class Dispatcher {
 
         this.localRefTable.put(id,obj);
         String ip = InetAddress.getLocalHost().getHostAddress();
-
-
+        
 		return new RemoteObjectRef(ip,this.port,id,remoteInterface);
 	}
 	

@@ -5,16 +5,21 @@ package cmu.cs.distsystems.hw2;
  * @author mayank
  */
 
-public class LocateRegistryServer {
+public class LocateRegistry {
 
 	public static RegistryClient getRegistryClient() {
 		//TODO: initialize RegistryClient with local host and default port and return
-		return null;
+		return new RegistryClient(RegistryServer.DEFAULT_REGISTRY_PORT, "localhost");
 	}
 	
 	public static RegistryClient getRegistryClient(int port) {
 		//TODO: initialize RegistryClient with local host and port and return
-		return null;
+		return new RegistryClient(port, "localhost");
+	}
+	
+	public static RegistryClient getRegistryClient(String registryHost, int port) {
+		//TODO: initialize RegistryClient with local host and port and return
+		return new RegistryClient(port, registryHost);
 	}
 	
 	/**

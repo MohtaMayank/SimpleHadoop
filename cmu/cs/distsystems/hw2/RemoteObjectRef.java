@@ -1,11 +1,12 @@
 package cmu.cs.distsystems.hw2;
 
+import java.io.Serializable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
 
-public class RemoteObjectRef
+public class RemoteObjectRef implements Serializable
 {
 
 	String ipAddr;

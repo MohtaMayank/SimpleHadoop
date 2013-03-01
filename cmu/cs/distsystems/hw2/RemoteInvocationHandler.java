@@ -34,21 +34,26 @@ public class RemoteInvocationHandler implements InvocationHandler {
         InvocationMessage imsg = new InvocationMessage(objId,method.getName(),objects);
 
         Socket sock = null;
+        
+        Object returnVal = null;
 
         try{
             sock = new Socket(this.host,this.port);
             ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
             oos.writeObject(imsg);
-            oos.close();
 
             ObjectInputStream ois = new ObjectInputStream(sock.getInputStream());
             ReturnMessage rm = (ReturnMessage)ois.readObject();
 
-            if(!rm.isException) return rm.returnVal;
-            else{
+            if(!rm.isException) { 
+            	returnVal = rm.returnVal;
+            } else {
                 throw (Exception) rm.returnVal;
             }
-
+            
+            ois.close();
+            oos.close();
+            sock.close();
         }catch (Exception e){
             e.printStackTrace();
         }finally {
@@ -60,6 +65,6 @@ public class RemoteInvocationHandler implements InvocationHandler {
                 }
             }
         }
-        return null;
+        return returnVal;
     }
 }
