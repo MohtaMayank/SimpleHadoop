@@ -37,7 +37,7 @@ public class RemoteInvocationHandler implements InvocationHandler {
         
         Object returnVal = null;
 
-        try{
+        try {
             sock = new Socket(this.host,this.port);
             ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
             oos.writeObject(imsg);
@@ -54,7 +54,7 @@ public class RemoteInvocationHandler implements InvocationHandler {
             ois.close();
             oos.close();
             sock.close();
-        }catch (Exception e){
+        } catch (Exception e){
             e.printStackTrace();
         }finally {
             if(sock != null) {

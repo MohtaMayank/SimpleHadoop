@@ -15,8 +15,13 @@ public class SimpleClient {
         	RemoteObjectRef ror = registry.lookup("HelloGiver1");
         	
         	GreetingGiver g = (GreetingGiver) ror.localise();
-        	System.out.println(g.giveGreeting("Yuchen"));
-        	System.out.println(g.giveGreeting("Mayank"));
+        	
+        	RemoteObjectRef ror2 = g.locateGreeter("HelloGiver2");
+        	
+        	GreetingGiver g2 = (GreetingGiver) ror2.localise();
+        	
+        	System.out.println(g2.collectGreeting("Yuchen", ror));
+        	System.out.println(g2.giveGreeting("Mayank", false));
         	
         }catch (Exception e){
         	e.printStackTrace();
