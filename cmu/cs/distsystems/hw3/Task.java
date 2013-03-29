@@ -38,6 +38,23 @@ abstract public class Task implements Serializable {
 	}
 	
 	
+	
+	public Job getParentJob() {
+		return parentJob;
+	}
+
+	public int getTaskId() {
+		return taskId;
+	}
+
+	public TaskState getState() {
+		return state;
+	}
+
+	public int getAttempts() {
+		return attempts;
+	}
+	
 	/**
 	 * @param args
 	 */
