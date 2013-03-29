@@ -11,6 +11,8 @@ import java.util.List;
  *
  */
 public class Split {
+
+    final static long defaultSize = 64000000;
 	FilePartition filePartition;
 	
 	public Split(FilePartition fp) {

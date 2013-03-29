@@ -1,5 +1,7 @@
 package cmu.cs.distsystems.hw3;
 
+import java.io.*;
+import java.net.Socket;
 import java.util.List;
 
 
@@ -11,10 +13,12 @@ import java.util.List;
 
 public class JobClient {
 
-	
-	public static void submitJob(Job job) {
+
+    final String configFile = "";
+    static Configuration jobConfig = new LocalConfig();
+
+	public void submitJob(Job job) {
 		//Ask Job Tracker for a new job Id.
-		
 		//Check output specification for the job. Error if output dir already exists.
 		
 		//Compute input splits for the job.
@@ -23,9 +27,49 @@ public class JobClient {
 		//Might not be needed if we use AFS.
 		
 		//Make an RPC call to JobTracker to start the job.
-		
-	}
-	
+
+
+        String host = jobConfig.getJobTrackerHost();
+        int port = jobConfig.getJobTrackerPort();
+
+        Socket sock = null;
+
+        try {
+            sock = new Socket(host,port);
+            ObjectInputStream ois = new ObjectInputStream(sock.getInputStream());
+            int newJobId = (Integer) ois.readObject();
+            List<Split> splits = computeSplits();
+
+            job.setId(newJobId);
+            job.setSplits(splits);
+
+            ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
+            oos.writeObject(job);
+
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(sock.getInputStream()));
+
+            String message = bufferedReader.readLine();
+
+            while(message != null){
+                System.out.println(message);
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } finally {
+            if (sock != null) {
+                try {
+                    sock.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+    }
+
 	//TODO: Implement this!
 	private static List<Split> computeSplits() {
 		
