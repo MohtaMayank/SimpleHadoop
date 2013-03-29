@@ -12,6 +12,14 @@ public class Record<K, V> {
 		this.value = value;
 	}
 	
+	public K getKey() {
+		return key;
+	}
+
+	public V getValue() {
+		return value;
+	}
+	
 	/**
 	 * @param args
 	 */

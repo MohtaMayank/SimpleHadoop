@@ -11,15 +11,10 @@ import java.util.List;
  *
  */
 public class Split {
-	List<FilePartition> filePartitions;
-	long totalBytes;
+	FilePartition filePartition;
 	
-	public Split() {
-		this.filePartitions = new ArrayList<FilePartition>();
-	}
-	
-	public void addFilePartition(FilePartition fp) {
-		this.filePartitions.add(fp);
+	public Split(FilePartition fp) {
+		this.filePartition = fp;
 	}
 	
 	public static void main(String[] args) {
