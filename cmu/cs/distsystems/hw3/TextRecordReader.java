@@ -30,19 +30,35 @@ public class TextRecordReader {
 		this.isInit = false;
 	}
 	
-	public Record<String, String> readNextRecord() throws IOException{
+	public Record<String, String> readNextRecord() throws IOException {
 		if(!isInit) {
 			initialize();
 		}
-		if(currentOffset > filePartition.getEnd()) {
-			close();
+		
+		if(currentOffset >= filePartition.getEnd()) {
+			raf.close();
 			return null;
 		}
 		
+		String line = raf.readLine();
+		if(line == null) {
+			return null;
+		}
 		
-		//Logic to split a line into key and values and create a value.
-		//String line = br.readLine();
-		Record<String, String> record = null;
+		Record<String, String> record;
+		
+		if(keyDelimiter == null) {
+			record = new Record<String, String>(filePartition.getFileName() 
+					+ currentOffset, line);
+		} else {
+			String[] tokens = line.split(keyDelimiter);
+			if(tokens.length != 2) {
+				System.out.println("error! wrong input format");
+			}
+			record = new Record<String, String>(tokens[0], tokens[1]);
+		}
+		
+		currentOffset += line.length();
 		
 		return record;
 	}
@@ -55,7 +71,7 @@ public class TextRecordReader {
 			raf.seek(filePartition.getStart() - 1);
 			//If this is not the start of line, then skip this line.
 			String line = raf.readLine();
-			if(line.equals("\n")) {
+			if(line.equals("")) {
 				raf.seek(filePartition.getStart());
 				this.currentOffset = filePartition.getStart();
 			} else {
@@ -67,6 +83,7 @@ public class TextRecordReader {
 			this.currentOffset = 0;
 		}
 		
+		this.isInit = true;
 	}
 	
 	private void close() {
@@ -79,23 +96,42 @@ public class TextRecordReader {
 	public static void main(String[] args) {
 		try {
 		
-		String f1 = "";
-		File file1 = new File(f1);
-		FilePartition fp1 = new FilePartition("", 0, f1.length());
-		
-		TextRecordReader reader = new TextRecordReader(fp1, null);
-		Record<String, String> record;
-		while( (record = reader.readNextRecord()) != null ) {
+			String f1 = "/home/mayank/DistributedSystems/test1.txt";
+			File file1 = new File(f1);
+			FilePartition fp1 = new FilePartition(f1, 13, file1.length());
 			
-		}
+			TextRecordReader reader = new TextRecordReader(fp1, null);
+			Record<String, String> record;
+			while( (record = reader.readNextRecord()) != null ) {
+				System.out.println(record.getKey() + ":" + record.getValue());
+			}
+			
+			String f2 = "/home/mayank/DistributedSystems/test1.txt";
+			File file2 = new File(f2);
+			FilePartition fp2 = new FilePartition(f2, 0, 13);
+			
+			reader = new TextRecordReader(fp2, null);
+			while( (record = reader.readNextRecord()) != null ) {
+				System.out.println(record.getKey() + ":" + record.getValue());
+			}
+			
+			String f3 = "/home/mayank/DistributedSystems/test1.txt";
+			File file3 = new File(f3);
+			FilePartition fp3 = new FilePartition(f3, 14, file3.length());
+			
+			reader = new TextRecordReader(fp3, null);
+			while( (record = reader.readNextRecord()) != null ) {
+				System.out.println(record.getKey() + ":" + record.getValue());
+			}
 		
-		String f2 = "";
-		File file2 = new File(f2);
-		FilePartition fp2 = new FilePartition("", 5, f2.length());
-		
-		String f3 = "";
-		File file3 = new File(f3);
-		FilePartition fp3 = new FilePartition("", 5, 15);
+			String f4 = "/home/mayank/DistributedSystems/test2.txt";
+			File file4 = new File(f4);
+			FilePartition fp4 = new FilePartition(f4, 0, file4.length());
+			
+			reader = new TextRecordReader(fp4, "\t");
+			while( (record = reader.readNextRecord()) != null ) {
+				System.out.println(record.getKey() + ":" + record.getValue());
+			}
 		
 		} catch (Exception e) {
 			e.printStackTrace();
