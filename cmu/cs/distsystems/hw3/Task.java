@@ -31,9 +31,7 @@ abstract public class Task implements Serializable {
 	public Task(Job parentJob, int taskId) {
 		this.parentJob = parentJob;
 		this.taskId = taskId;
-		
 		this.state = TaskState.PENDING;
-		
 		this.attempts = 0;
 	}
 	

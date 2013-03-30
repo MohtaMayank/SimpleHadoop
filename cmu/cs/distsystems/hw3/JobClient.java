@@ -28,7 +28,6 @@ public class JobClient {
 		
 		//Make an RPC call to JobTracker to start the job.
 
-
         String host = jobConfig.getJobTrackerHost();
         int port = jobConfig.getJobTrackerPort();
 
