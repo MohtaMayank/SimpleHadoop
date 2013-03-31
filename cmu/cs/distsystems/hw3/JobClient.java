@@ -15,7 +15,7 @@ public class JobClient {
 
 
     final String configFile = "";
-    static Configuration jobConfig = new LocalConfig();
+    static ClusterConfig clusterConfig;
 
 	public void submitJob(Job job) {
 		//Ask Job Tracker for a new job Id.
@@ -28,8 +28,8 @@ public class JobClient {
 		
 		//Make an RPC call to JobTracker to start the job.
 
-        String host = jobConfig.getJobTrackerHost();
-        int port = jobConfig.getJobTrackerPort();
+        String host = clusterConfig.getJobTrackerHost();
+        int port = clusterConfig.getJobTrackerPort();
 
         Socket sock = null;
 

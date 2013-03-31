@@ -14,6 +14,7 @@ package cmu.cs.distsystems.hw3;
  */
 
 public class MapTask extends Task {
+	
 	private static final long serialVersionUID = 1L;
 	
 	private Split mySplit;
@@ -24,6 +25,10 @@ public class MapTask extends Task {
 		this.mySplit = split;
 	}
 
+	public Split getMySplit() {
+		return mySplit;
+	}	
+	
 	/**
 	 * @param args
 	 */
