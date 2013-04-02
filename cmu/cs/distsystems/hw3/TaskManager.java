@@ -10,6 +10,8 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import cmu.cs.distsystems.hw3.WorkerHeartbeatResponse.Cmd;
+
 /**
  * Launch JVM if required. Send the Map or the Reduce Task to the JVM. 
  * This link might be useful:
@@ -32,11 +34,14 @@ public class TaskManager implements Runnable {
 	private int managerId;
 	private TaskTracker.WorkerType workerType;
 	
+	private Task currentTask;
+	
 	public TaskManager(int managerId, TaskTracker parentTT, 
 			TaskTracker.WorkerType type) {
 		this.parentTT = parentTT;
 		this.managerId = managerId;
-		this.workerType = workerType;
+		this.workerType = type;
+		setCurrentTask(null);
 	}
 	
 	@Override
@@ -44,6 +49,7 @@ public class TaskManager implements Runnable {
 		ServerSocket serverSocket = null;
 		try {
 			serverSocket = new ServerSocket(5555);
+			//If no haertbeat from worker process ... then timeout. 
 			serverSocket.setSoTimeout(ACCEPT_TIMEOUT);
 			while(true) {
 				Socket clientSocket = null;
@@ -83,62 +89,60 @@ public class TaskManager implements Runnable {
 	private WorkerHeartbeatResponse handleHeartbeat(WorkerHeartbeat hb) {
 		WorkerHeartbeatResponse response = null;
 		
-		if(hb.isRunningTask()) {
-			response = new WorkerHeartbeatResponse(null);
-		} else {
-			//Set the shared variable that I am free.
-			
-			//task = parentTT.getTask()
-			/*if(task != null) {
-				
+		if(hb.getTaskId() != -1) {
+			if(hb.getTask().getStats().getPercentComplete() < 100) {
+				parentTT.updateTaskStat(hb.getTaskId(), hb.getTask());
+				//Indicates that this worker is not free
+				setCurrentTask(hb.getTask());
+				//The task runner should continue working on the task.
+				response = new WorkerHeartbeatResponse(null, WorkerHeartbeatResponse.Cmd.POLL);
 			} else {
-			
-			}*/
-				
+				parentTT.updateTaskStat(hb.getTaskId(), hb.getTask());
+				//Indicates that this worker is free
+				setCurrentTask(null);
+				//the task runner has completed the task and should start looking for a
+				//new task.
+				response = new WorkerHeartbeatResponse(null, WorkerHeartbeatResponse.Cmd.IDLE);
+			}
+		} else {
+			if(getCurrentTask() != null && getCurrentTask().getStats().getPercentComplete() == 0) {
+				response = new WorkerHeartbeatResponse(getCurrentTask(), 
+						WorkerHeartbeatResponse.Cmd.RUN_NEW_TASK);
+			} else {
+				response = new WorkerHeartbeatResponse(null, WorkerHeartbeatResponse.Cmd.IDLE);
+			}
 		}
 		
-		return null;
+		return response;
 	}
 
+	/**
+	 * Kill the old java process if one exists
+	 * If there was a task that was being executed mark it as failed.
+	 * Create a new Java process. 
+	 */
 	public void startTaskRunner() {
 		
 	}
 
         
-	/**
-	 * test
-	 */
-	public static void main(String[] args) {
-		try {
-		
-			String jar = "/home/mayank/DistributedSystems/test.jar";
-			String mapClassName = "Test";
-		
-			String javaHome = System.getProperty("java.home");
-	        String javaBin = javaHome + File.separator + "bin" + 
-	        		File.separator + "java";
-	
-	        ProcessBuilder builder = new ProcessBuilder(
-	                javaBin, "-cp", jar, mapClassName, "Mayank", "Yuchen", "Spaghetti Monster");
-	
-	        Process process = builder.start();
-	        
-	        InputStream in = process.getInputStream();
-	        BufferedReader br = new BufferedReader(new InputStreamReader(in));
-	        
-	        String line = null;
-	        while( (line = br.readLine()) != null ) {
-	        	System.out.println(line);
-	        }
-	        
-	        
-	        process.waitFor();
-	        System.out.println("Exit Value: " + process.exitValue());
-        
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
+	public synchronized Task getCurrentTask() {
+		return currentTask;
 	}
 
+	public synchronized void setCurrentTask(Task currentTask) {
+		this.currentTask = currentTask;
+	}
+
+	public TaskTracker getParentTT() {
+		return parentTT;
+	}
+
+	public int getManagerId() {
+		return managerId;
+	}
+
+	public TaskTracker.WorkerType getWorkerType() {
+		return workerType;
+	}
 }

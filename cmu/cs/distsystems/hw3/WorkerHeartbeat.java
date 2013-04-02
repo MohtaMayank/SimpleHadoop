@@ -2,28 +2,22 @@ package cmu.cs.distsystems.hw3;
 
 public class WorkerHeartbeat {
 
-	private boolean isRunningTask;
-	private int taskId;
-	private double percentComplete;
+	private Task currentTask;
 	
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
-	}
-	
-	public boolean isRunningTask() {
-		return isRunningTask;
+	public WorkerHeartbeat(Task currenTask) {
+		this.currentTask = currenTask;
 	}
 
 	public int getTaskId() {
-		return taskId;
+		if(currentTask != null) {
+			return currentTask.getTaskId();
+		} else {
+			return -1;
+		}
 	}
-
-	public double getPercentComplete() {
-		return percentComplete;
+	
+	public Task getTask() {
+		return this.currentTask;
 	}
 
 }

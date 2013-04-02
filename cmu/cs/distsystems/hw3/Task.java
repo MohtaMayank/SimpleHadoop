@@ -26,13 +26,13 @@ abstract public class Task implements Serializable {
 	
 	private TaskState state;
 	
-	private int attempts;
-
+	private TaskStats stats;
+	
 	public Task(Job parentJob, int taskId) {
 		this.parentJob = parentJob;
 		this.taskId = taskId;
 		this.state = TaskState.PENDING;
-		this.attempts = 0;
+		this.stats = new TaskStats();
 	}
 	
 	
@@ -48,10 +48,11 @@ abstract public class Task implements Serializable {
 	public TaskState getState() {
 		return state;
 	}
-
-	public int getAttempts() {
-		return attempts;
+	
+	public TaskStats getStats() {
+		return stats;
 	}
+
 	
 	/**
 	 * @param args

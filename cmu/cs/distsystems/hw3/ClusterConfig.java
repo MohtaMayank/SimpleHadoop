@@ -28,6 +28,20 @@ public class ClusterConfig {
 		
 	}
 	
+	/**
+	 * Returns the worker  config object corresponding to the worker.
+	 * @param hostname
+	 * @return
+	 */
+	public WorkerConfig getWorkerConfig(String hostname) {
+		for(WorkerConfig config : this.workers) {
+			if(config.getHostName().equals(hostname)) {
+				return config;
+			}
+		}
+		return null;
+	}
+	
 	public String getConfigFile() {
 		return configFile;
 	}
