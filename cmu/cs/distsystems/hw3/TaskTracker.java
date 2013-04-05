@@ -4,6 +4,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -99,7 +100,7 @@ public class TaskTracker {
 		
 	}
 	
-	private int getFreeReducerSlots() {
+	private int getFreeMapperSlots() {
 		int freeMapSlots = 0;
 		for(TaskManager mgr : managers.values()) {
 			if(mgr.getWorkerType() == WorkerType.MAPPER && mgr.getCurrentTask() == null) {
@@ -108,17 +109,27 @@ public class TaskTracker {
 		}
 		return freeMapSlots;
 	}
+	
+	private TaskManager getFreeWorker(WorkerType type) {
+		for(TaskManager mgr : managers.values()) {
+			if(mgr.getWorkerType() == type && mgr.getCurrentTask() == null) {
+				return mgr;
+			}
+		}
+		return null;
+	}
 
-	private int getFreeMapperSlots() {
+	private int getFreeReducerSlots() {
 		int freeReduceSlots = 0;
 		for(TaskManager mgr : managers.values()) {
-			if(mgr.getWorkerType() == WorkerType.MAPPER && mgr.getCurrentTask() == null) {
+			if(mgr.getWorkerType() == WorkerType.REDUCER && mgr.getCurrentTask() == null) {
 				freeReduceSlots++;
 			}
 		}
 		return freeReduceSlots;
 	}
 
+	
 	private void handleResponse(TaskTrackerHBResponse resp) {
 		
 		if(resp.getCommand() == TaskTrackerHBResponse.Cmd.SHUT_DOWN) {
@@ -128,10 +139,13 @@ public class TaskTracker {
 			TaskManager freeWorker;
 			//TODO: Will this work or do we need a taskType variable?
 			if(newTask instanceof MapTask) {
-				
-				
+				freeWorker = getFreeWorker(WorkerType.MAPPER);
+				freeWorker.setCurrentTask(newTask);
+				updateTaskStat(newTask.getTaskId(), newTask);
 			} else if (newTask instanceof ReduceTask) {
-				
+				freeWorker = getFreeWorker(WorkerType.REDUCER);
+				freeWorker.setCurrentTask(newTask);
+				updateTaskStat(newTask.getTaskId(), newTask);
 			} else {
 				//Cannot happen!
 				System.out.println("Invalid task type ... Ignoring");
@@ -178,14 +192,40 @@ public class TaskTracker {
 					socket.close();
 				}
 			}
+			
+			//Sleep for 1 second
+			Thread.sleep(1000);
 		}
 		
 	}
 	
+	/**
+	 * Create a snapshot of the current running tasks.
+	 * @return
+	 */
 	private List<Task> createTaskSnapshot() {
-		// TODO Auto-generated method stub
+		List<Task> taskSnapshot = new ArrayList<Task>();
+		List<Task> finishedTasks = new ArrayList<Task>();
 		
-		return null;
+		for(Task task : runningTaskStats.values()) {
+			if(task instanceof MapTask) {
+				taskSnapshot.add(new MapTask((MapTask)task));
+			} else if(task instanceof ReduceTask) {
+				taskSnapshot.add(new ReduceTask((ReduceTask)task));
+			}
+			
+			if(task.getPercentComplete() == 100) {
+				finishedTasks.add(task);
+			}
+			
+		}
+		
+		//cleanup tasks which have finished.
+		for(Task task : finishedTasks) {
+			runningTaskStats.remove(finishedTasks);
+		}
+		
+		return taskSnapshot;
 	}
 
 	/**

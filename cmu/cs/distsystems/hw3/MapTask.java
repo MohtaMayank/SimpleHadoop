@@ -24,6 +24,12 @@ public class MapTask extends Task {
 		
 		this.mySplit = split;
 	}
+	
+	//Copy constructor
+	public MapTask(MapTask task) {
+		super(task);
+		this.mySplit = task.getMySplit();
+	}
 
 	public Split getMySplit() {
 		return mySplit;

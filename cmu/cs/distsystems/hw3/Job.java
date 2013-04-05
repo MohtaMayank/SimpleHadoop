@@ -22,9 +22,14 @@ public class Job implements Serializable {
 	private String configFile;
 	private String inputDir;
 	private String outputDir;
-	
+	private String tmpMapOpDir;
+
 	private List<Split> splits;
 	
+	public Job(int id) {
+		this.id = id;
+		
+	}
 
 	public int getId() {
 		return id;
@@ -96,6 +101,10 @@ public class Job implements Serializable {
 
 	public void setOutputDir(String outputDir) {
 		this.outputDir = outputDir;
+	}
+	
+	public String getTmpMapOpDir() {
+		return tmpMapOpDir;
 	}
 
 	public List<Split> getSplits() {

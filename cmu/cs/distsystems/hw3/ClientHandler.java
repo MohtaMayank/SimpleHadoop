@@ -30,7 +30,7 @@ public class ClientHandler implements Runnable {
         List<Task> tasks = new ArrayList<Task>();
 
         for(int i = 0 ; i < job.getNumReducers(); i++){
-            tasks.add(new ReduceTask(job,JobTracker.getNextTaskId()));
+            tasks.add(new ReduceTask(job,JobTracker.getNextTaskId(), i));
         }
 
         return tasks;

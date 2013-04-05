@@ -90,7 +90,7 @@ public class TaskManager implements Runnable {
 		WorkerHeartbeatResponse response = null;
 		
 		if(hb.getTaskId() != -1) {
-			if(hb.getTask().getStats().getPercentComplete() < 100) {
+			if(hb.getTask().getPercentComplete() < 100) {
 				parentTT.updateTaskStat(hb.getTaskId(), hb.getTask());
 				//Indicates that this worker is not free
 				setCurrentTask(hb.getTask());
@@ -105,7 +105,7 @@ public class TaskManager implements Runnable {
 				response = new WorkerHeartbeatResponse(null, WorkerHeartbeatResponse.Cmd.IDLE);
 			}
 		} else {
-			if(getCurrentTask() != null && getCurrentTask().getStats().getPercentComplete() == 0) {
+			if(getCurrentTask() != null && getCurrentTask().getPercentComplete() == 0) {
 				response = new WorkerHeartbeatResponse(getCurrentTask(), 
 						WorkerHeartbeatResponse.Cmd.RUN_NEW_TASK);
 			} else {

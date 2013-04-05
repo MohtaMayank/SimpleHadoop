@@ -19,6 +19,7 @@ enum TaskState {
  * @author mayank
  */
 abstract public class Task implements Serializable {
+
 	private static final long serialVersionUID = 1L;
 	
 	private Job parentJob;
@@ -26,15 +27,30 @@ abstract public class Task implements Serializable {
 	
 	private TaskState state;
 	
-	private TaskStats stats;
+	private double percentComplete;
+	private long startTime;
+	private long endTime;
+	private int attemptNum;	
 	
 	public Task(Job parentJob, int taskId) {
 		this.parentJob = parentJob;
 		this.taskId = taskId;
 		this.state = TaskState.PENDING;
-		this.stats = new TaskStats();
+		this.percentComplete = 0;
+		this.attemptNum = 0;
 	}
 	
+	//Copy constructor
+	public Task(Task task) {
+		this.parentJob = task.getParentJob();
+		this.taskId = task.getTaskId();
+		this.state = task.getState();
+		this.attemptNum = task.getAttemptNum();
+		this.percentComplete = task.getPercentComplete();
+		this.startTime = task.getStartTime();
+		this.endTime = task.getEndTime();
+		
+	}
 	
 	
 	public Job getParentJob() {
@@ -45,21 +61,67 @@ abstract public class Task implements Serializable {
 		return taskId;
 	}
 
-	public TaskState getState() {
+	public synchronized TaskState getState() {
 		return state;
 	}
 	
-	public TaskStats getStats() {
-		return stats;
+	public synchronized void setTaskState(TaskState state) {
+		this.state = state;
 	}
-
 	
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
+	
+	public synchronized double getPercentComplete() {
+		return percentComplete;
 	}
 
+	public synchronized void setPercentComplete(double percentComplete) {
+		this.percentComplete = percentComplete;
+	}
+
+	public synchronized long getStartTime() {
+		return startTime;
+	}
+
+	public synchronized void setStartTime(long startTime) {
+		this.startTime = startTime;
+	}
+
+	public synchronized long getEndTime() {
+		return endTime;
+	}
+
+	public synchronized void setEndTime(long endTime) {
+		this.endTime = endTime;
+	}
+
+	public synchronized int getAttemptNum() {
+		return attemptNum;
+	}
+
+	public synchronized void setAttemptNum(int attemptNum) {
+		this.attemptNum = attemptNum;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + taskId;
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Task other = (Task) obj;
+		if (taskId != other.taskId)
+			return false;
+		return true;
+	}
+	
 }

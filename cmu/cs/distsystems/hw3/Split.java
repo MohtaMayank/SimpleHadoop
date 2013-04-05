@@ -19,6 +19,10 @@ public class Split {
 		this.filePartition = fp;
 	}
 	
+	public FilePartition getFilePartition() {
+		return filePartition;
+	}
+	
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 
