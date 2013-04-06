@@ -7,8 +7,11 @@ import java.lang.reflect.Constructor;
 import java.net.Socket;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Enumeration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 import cmu.cs.distsystems.hw2.HelloGiver;
 import cmu.cs.distsystems.hw3.WorkerHeartbeatResponse.Cmd;
@@ -37,8 +40,6 @@ public class TaskRunner {
 			Socket socket = null;
 			try {
 				socket = new Socket("localhost", port);
-				
-				
 				
 				WorkerHeartbeat hb = new WorkerHeartbeat(createSnapshot());
 				//Send heart-beat to job tracker.
@@ -90,7 +91,16 @@ public class TaskRunner {
 			//Spawn a new thread and start running the task
 			//On any exception, log and fail the complete process.
 			setCurrentTask(resp.getNewTask());
-			es.submit(new Worker(currentTask));
+
+            Worker worker = null;
+
+            if(currentTask instanceof MapTask){
+                worker = new MapWorker(currentTask);
+            } else {
+                worker = new ReduceWorker(currentTask);
+            }
+
+            es.submit(worker);
 		} else if(resp.getCommand() == Cmd.SHUTDOWN) {
 			System.exit(0);
 		}
@@ -104,46 +114,7 @@ public class TaskRunner {
 		return currentTask;
 	}
 		
-	/**
-	 * test
-	 */
-	/*
-	public static void main(String[] args) {
-		try {
-		
-			int port = Integer.parseInt(args[0]);
-			
-			
-			
-			String jar = "/home/mayank/DistributedSystems/test.jar";
-			String mapClassName = "Test";
-		
-			String javaHome = System.getProperty("java.home");
-	        String javaBin = javaHome + File.separator + "bin" + 
-	        		File.separator + "java";
-	
-	        ProcessBuilder builder = new ProcessBuilder(
-	                javaBin, "-cp", jar, mapClassName, "Mayank", "Yuchen", "Spaghetti Monster");
-	
-	        Process process = builder.start();
-	        
-	        InputStream in = process.getInputStream();
-	        BufferedReader br = new BufferedReader(new InputStreamReader(in));
-	        
-	        String line = null;
-	        while( (line = br.readLine()) != null ) {
-	        	System.out.println(line);
-	        }
-	        
-	        
-	        process.waitFor();
-	        System.out.println("Exit Value: " + process.exitValue());
-        
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 
-	}*/
 	
 	public static void main(String[] args) {
 		try {
@@ -159,45 +130,92 @@ public class TaskRunner {
 
 }
 
-class Worker implements Runnable {
-	private Task task;
+abstract class Worker implements Runnable {
+	protected Task task;
 	
 	public Worker(Task task) {
 		this.task = task;
 	}
 	
 	@Override
-	public void run() {
-		if(task instanceof MapTask) {
-			try {
-				
-				MapTask mapTask = (MapTask)task;
-				
-				String jar = mapTask.getParentJob().getJar();
-				String mapClassName = mapTask.getParentJob().getMapClass();
-				
-				Class<?> mapClazz = loadClass(jar, mapClassName);
-				Constructor<?> constructor = mapClazz.getConstructor();
-                Mapper mapper = (Mapper) constructor.newInstance(mapTask);
-                mapper.run();
-
-				
-
-		        
-		        
-			} catch (Exception e) {
-				//TODO: Handle this properly
-				e.printStackTrace();
-			}
-		}
-
-		
-	}
+	abstract public void run();
 	
-	public Class<?> loadClass(String dir, String className) throws Exception {
-		URL[] urls = new URL[]{new URL(dir)};
-		URLClassLoader loader = new URLClassLoader(urls);
-		return loader.loadClass(className);
+	public static Class<?> loadClass(String pathToJar, String targetClassName) throws Exception {
+        JarFile jarFile = new JarFile(pathToJar);
+        Enumeration e = jarFile.entries();
+
+        URL[] urls = { new URL("jar:file:" + pathToJar+"!/") };
+        ClassLoader cl = URLClassLoader.newInstance(urls);
+
+        Class target = null;
+
+        while (e.hasMoreElements()) {
+            JarEntry je = (JarEntry) e.nextElement();
+            if(je.isDirectory() || !je.getName().endsWith(".class")){
+                continue;
+            }
+            // -6 because of .class
+            String className = je.getName().substring(0,je.getName().length()-6);
+            className = className.replace('/', '.');
+            Class clazz = cl.loadClass(className);
+
+            if(className.equals(targetClassName)){
+                target = clazz;
+            }
+        }
+
+        return target;
 	}
-	
+
 }
+
+class MapWorker extends Worker{
+
+    public MapWorker(Task task) {
+        super(task);
+    }
+
+    @Override
+    public void run() {
+        MapTask mapTask = (MapTask) this.task;
+        String jar = mapTask.getParentJob().getJar();
+
+        String mapClassName = mapTask.getParentJob().getMapClass();
+
+        Class<?> mapClazz;
+        try {
+            mapClazz = Worker.loadClass(jar, mapClassName);
+            Constructor<?> constructor = mapClazz.getConstructor();
+            Mapper mapper = (Mapper) constructor.newInstance();
+
+            mapper.init(mapTask);
+
+            TextRecordReader reader = mapper.reader;
+            Record<String,String> record = reader.readNextRecord();
+
+            while(record != null){
+                mapper.map(record.getKey(), record.getValue(), mapper.writer);
+                record = reader.readNextRecord();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+}
+
+
+class ReduceWorker extends Worker{
+
+    public ReduceWorker(Task task) {
+        super(task);
+    }
+
+    @Override
+    public void run(){
+        //System.out.println("this is my");
+        //TODO:fill this out~~~
+    }
+}
+
