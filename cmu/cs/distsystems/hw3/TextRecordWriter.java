@@ -28,7 +28,7 @@ public class TextRecordWriter {
 			initialize();
 		}
 		
-		bw.write(record.getKey() + this.delim + record.getValue());
+		bw.write(record.getKey() + this.delim + record.getValue() + "\n");
 	}
 	
 	
@@ -37,7 +37,7 @@ public class TextRecordWriter {
 		bw = new FileWriter(outputFile, true);
 	}
 	
-	private void close() throws IOException {
+	public void close() throws IOException {
 		bw.flush();
 		bw.close();
 	}

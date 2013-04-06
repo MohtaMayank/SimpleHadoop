@@ -1,8 +1,11 @@
 package cmu.cs.distsystems.hw3;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
 import java.lang.reflect.Constructor;
 import java.net.Socket;
 import java.net.URL;
@@ -13,7 +16,6 @@ import java.util.concurrent.Executors;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-import cmu.cs.distsystems.hw2.HelloGiver;
 import cmu.cs.distsystems.hw3.WorkerHeartbeatResponse.Cmd;
 
 /**
@@ -33,10 +35,12 @@ public class TaskRunner {
 	public TaskRunner(int port) {
 		this.port = port;
 		es = Executors.newFixedThreadPool(1);
+		this.currentTask = null;
 	}
 	
 	public void run() throws Exception {
 		while(true) {
+			Thread.sleep(500);
 			Socket socket = null;
 			try {
 				socket = new Socket("localhost", port);
@@ -44,7 +48,7 @@ public class TaskRunner {
 				WorkerHeartbeat hb = new WorkerHeartbeat(createSnapshot());
 				//Send heart-beat to job tracker.
 				ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-				oos.writeObject((Object)hb);
+				oos.writeObject(hb);
 				oos.flush();
 				
 				//Receive response from job tracker.
@@ -68,6 +72,7 @@ public class TaskRunner {
 		}
 	}
 	
+	
 	private Task createSnapshot() {
 		//Return the status of the current task which is executing
 		Task snapshot;
@@ -83,7 +88,7 @@ public class TaskRunner {
 
 	private void handleResponse(WorkerHeartbeatResponse resp) {
 		if(resp.getCommand() == Cmd.IDLE) {
-			//Do nothing.
+			currentTask = null;
 		} else if(resp.getCommand() == Cmd.POLL) {
 			//Do nothing
 		} else if(resp.getCommand() == Cmd.RUN_NEW_TASK) {
@@ -92,15 +97,12 @@ public class TaskRunner {
 			//On any exception, log and fail the complete process.
 			setCurrentTask(resp.getNewTask());
 
-            Worker worker = null;
-
             if(currentTask instanceof MapTask){
-                worker = new MapWorker(currentTask);
+                es.submit(new MapWorker(currentTask));
             } else {
-                worker = new ReduceWorker(currentTask);
+                //worker = new ReduceWorker(currentTask);
             }
 
-            es.submit(worker);
 		} else if(resp.getCommand() == Cmd.SHUTDOWN) {
 			System.exit(0);
 		}
@@ -120,6 +122,7 @@ public class TaskRunner {
 		try {
 			int port = Integer.parseInt(args[0]);
 			TaskRunner runner = new TaskRunner(port);
+			System.out.println("Starting task runner on port " + port + "...");
 			runner.run();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -127,18 +130,6 @@ public class TaskRunner {
 		}
 		
 	}
-
-}
-
-abstract class Worker implements Runnable {
-	protected Task task;
-	
-	public Worker(Task task) {
-		this.task = task;
-	}
-	
-	@Override
-	abstract public void run();
 	
 	public static Class<?> loadClass(String pathToJar, String targetClassName) throws Exception {
         JarFile jarFile = new JarFile(pathToJar);
@@ -169,14 +160,24 @@ abstract class Worker implements Runnable {
 
 }
 
-class MapWorker extends Worker{
 
+class MapWorker implements Runnable {
+	private Task task;
+	private FileWriter logsWriter;
+	
     public MapWorker(Task task) {
-        super(task);
+    	this.task = task;
+    	try {
+    	this.logsWriter = new FileWriter(
+    			new File(task.getParentJob().getTmpMapOpDir() + "logs.txt"), true);
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    	}
     }
 
     @Override
     public void run() {
+    	
         MapTask mapTask = (MapTask) this.task;
         String jar = mapTask.getParentJob().getJar();
 
@@ -184,11 +185,17 @@ class MapWorker extends Worker{
 
         Class<?> mapClazz;
         try {
-            mapClazz = Worker.loadClass(jar, mapClassName);
+        	logsWriter.append("HERE!\n");
+        	this.task.setPercentComplete(100);
+        	
+            mapClazz = TaskRunner.loadClass(jar, mapClassName);
             Constructor<?> constructor = mapClazz.getConstructor();
             Mapper mapper = (Mapper) constructor.newInstance();
 
             mapper.init(mapTask);
+            
+            logsWriter.append("INIT!\n");
+            logsWriter.flush();
 
             TextRecordReader reader = mapper.reader;
             Record<String,String> record = reader.readNextRecord();
@@ -197,8 +204,19 @@ class MapWorker extends Worker{
                 mapper.map(record.getKey(), record.getValue(), mapper.context);
                 record = reader.readNextRecord();
             }
+            
+            mapper.context.flush();
+            
+            
         } catch (Exception e) {
-            e.printStackTrace();
+        	try {
+        		logsWriter.append("ERROR!! \n");
+        		logsWriter.append(e.getCause().getMessage() + "\n");
+        		logsWriter.flush();
+        	} catch (IOException ioe) {
+        		
+        	}
+        	System.exit(2);
         }
 
     }
@@ -206,10 +224,10 @@ class MapWorker extends Worker{
 }
 
 
-class ReduceWorker extends Worker{
+class ReduceWorker implements Runnable {
 
     public ReduceWorker(Task task) {
-        super(task);
+
     }
 
     @Override

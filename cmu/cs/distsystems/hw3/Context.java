@@ -58,6 +58,7 @@ public class Context {
             {
                 writer.writeRecord(record);
             }
+            writer.close();
         }
     }
 

@@ -5,14 +5,14 @@ public class ExampleProg1 {
 	public static void main(String[] args) {
 		Job job = new Job();
 		
-		job.setMapClass("Ex1Map");
-		job.setCombinerClass("Ex1Combiner");
-		job.setReduceClass("Ex1Reducer");
+		job.setMapClass("cmu.cs.distsystems.hw3.Ex1Map");
+		job.setCombinerClass("cmu.cs.distsystems.hw3.Ex1Combiner");
+		job.setReduceClass("cmu.cs.distsystems.hw3.Ex1Reducer");
 		
 		//TODO: implement this ... currently not implemented
 		job.setConfigFile("");
 		
-		job.setJar("");
+		job.setJar("/home/mayank/workspace/DistributedSystems/example1.jar");
 		job.setInputDir("/home/mayank/DistributedSystems/HW3/input/");
 		job.setOutputDir("/home/mayank/DistributedSystems/HW3/output/");
 		
@@ -22,7 +22,15 @@ public class ExampleProg1 {
 	}
 }
 
-class Ex1Map {
+class Ex1Map extends Mapper {
+
+	@Override
+	public void map(String key, String value, Context context) {
+		String[] toks = value.split(" ");
+		for(String s : toks) {
+			context.write(s, "1");
+		}
+	}
 	
 }
 

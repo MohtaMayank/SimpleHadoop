@@ -103,7 +103,7 @@ public class Job implements Serializable {
 	}
 	
 	public String getTmpMapOpDir() {
-		return tmpMapOpDir;
+		return outputDir + "/tmp/";
 	}
 
 	public List<Split> getSplits() {

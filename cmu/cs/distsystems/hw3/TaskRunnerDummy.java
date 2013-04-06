@@ -1,25 +1,20 @@
-/*package cmu.cs.distsystems.hw3;
+package cmu.cs.distsystems.hw3;
 
-import java.io.File;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.lang.reflect.Constructor;
 import java.net.Socket;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import cmu.cs.distsystems.hw2.HelloGiver;
 import cmu.cs.distsystems.hw3.WorkerHeartbeatResponse.Cmd;
 
-*//**
+/**
  * Will be run as a separate JVM. In this JVM, the map or the reduce task will
  * actually run. Will communicate with the respective TaskManager thread to get
  * new tasks.
  * Do we need heartbeat for monitoring if the process is alive??
  * @author mayank
- *//*
+ */
 
 public class TaskRunnerDummy {
 
@@ -94,7 +89,7 @@ public class TaskRunnerDummy {
 			//Spawn a new thread and start running the task
 			//On any exception, log and fail the complete process.
 			setCurrentTask(resp.getNewTask());
-			es.submit(new Worker(currentTask));
+			es.submit(new WorkerDummy(currentTask));
 		} else if(resp.getCommand() == Cmd.SHUTDOWN) {
 			System.exit(0);
 		}
@@ -123,10 +118,10 @@ public class TaskRunnerDummy {
 
 }
 
-class Worker implements Runnable {
+class WorkerDummy implements Runnable {
 	private Task task;
 	
-	public Worker(Task task) {
+	public WorkerDummy(Task task) {
 		this.task = task;
 	}
 	
@@ -149,4 +144,3 @@ class Worker implements Runnable {
 	}
 	
 }
-*/
