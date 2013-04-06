@@ -194,7 +194,7 @@ class MapWorker extends Worker{
             Record<String,String> record = reader.readNextRecord();
 
             while(record != null){
-                mapper.map(record.getKey(), record.getValue(), mapper.writer);
+                mapper.map(record.getKey(), record.getValue(), mapper.context);
                 record = reader.readNextRecord();
             }
         } catch (Exception e) {
@@ -214,7 +214,6 @@ class ReduceWorker extends Worker{
 
     @Override
     public void run(){
-        //System.out.println("this is my");
         //TODO:fill this out~~~
     }
 }

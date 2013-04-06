@@ -4,16 +4,19 @@ public abstract class Mapper{
 
 	MapTask mapTask;
     TextRecordReader reader;
-    TextRecordWriter writer;
+    Context context;
 
     public void init(MapTask mapTask){
         this.mapTask = mapTask;
         this.reader = new TextRecordReader(
                 mapTask.getMySplit().getFilePartition(), null);
 
-        this.writer = new TextRecordWriter(mapTask.getParentJob().getTmpMapOpDir(), "\t");
+        int taskId = mapTask.getTaskId();
+        String outputDir = mapTask.getParentJob().getTmpMapOpDir();
+        int reduceNum = mapTask.getParentJob().getNumReducers();
+        this.context = new Context(taskId, outputDir, reduceNum);
 
     }
 
-    abstract public void map(String key, String value, TextRecordWriter writer);
+    abstract public void map(String key, String value, Context context);
 }
