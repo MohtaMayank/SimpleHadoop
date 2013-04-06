@@ -27,20 +27,25 @@ import cmu.cs.distsystems.hw3.WorkerHeartbeatResponse.Cmd;
 
 public class TaskManager implements Runnable {
 
-	public static final String TASK_RUNNER_CLASS = "TaskRunner";
+	//public static final String TASK_RUNNER_CLASS = "cmu.cs.distsystems.hw3.TaskRunnerDummy";
+	public static final String TASK_RUNNER_CLASS = "cmu.cs.distsystems.hw3.TaskRunner";
 	public static final int ACCEPT_TIMEOUT = 4000;
 	
 	private TaskTracker parentTT;
 	private int managerId;
 	private TaskTracker.WorkerType workerType;
+	private int port;
 	
 	private Task currentTask;
+	
+	private Process workerProcess;
 	
 	public TaskManager(int managerId, TaskTracker parentTT, 
 			TaskTracker.WorkerType type) {
 		this.parentTT = parentTT;
 		this.managerId = managerId;
 		this.workerType = type;
+		this.port = parentTT.getPort() + managerId;
 		setCurrentTask(null);
 	}
 	
@@ -48,7 +53,7 @@ public class TaskManager implements Runnable {
 	public void run() {
 		ServerSocket serverSocket = null;
 		try {
-			serverSocket = new ServerSocket(5555);
+			serverSocket = new ServerSocket(this.port);
 			//If no haertbeat from worker process ... then timeout. 
 			serverSocket.setSoTimeout(ACCEPT_TIMEOUT);
 			while(true) {
@@ -63,6 +68,8 @@ public class TaskManager implements Runnable {
 					
 					WorkerHeartbeat hb = (WorkerHeartbeat)ois.readObject();
 					
+					//System.out.println("Received heartbeat from worker");
+					
 					WorkerHeartbeatResponse response = handleHeartbeat(hb);
 					
 					ObjectOutputStream oos = new ObjectOutputStream(clientSocket.getOutputStream());
@@ -72,12 +79,12 @@ public class TaskManager implements Runnable {
 					ois.close();
 					oos.close();
 					clientSocket.close();
+					
 				} catch (InterruptedIOException timeout) { 
 					startTaskRunner();
 				} catch (Exception exc) {
 					exc.printStackTrace();
 				} finally {
-					clientSocket.close();
 				}
 			}
 		} catch (Exception e) {
@@ -87,32 +94,34 @@ public class TaskManager implements Runnable {
 
 	
 	private WorkerHeartbeatResponse handleHeartbeat(WorkerHeartbeat hb) {
-		WorkerHeartbeatResponse response = null;
+		WorkerHeartbeatResponse response;
 		
-		if(hb.getTaskId() != -1) {
-			if(hb.getTask().getPercentComplete() < 100) {
-				parentTT.updateTaskStat(hb.getTaskId(), hb.getTask());
-				//Indicates that this worker is not free
-				setCurrentTask(hb.getTask());
-				//The task runner should continue working on the task.
-				response = new WorkerHeartbeatResponse(null, WorkerHeartbeatResponse.Cmd.POLL);
-			} else {
-				parentTT.updateTaskStat(hb.getTaskId(), hb.getTask());
-				//Indicates that this worker is free
-				setCurrentTask(null);
-				//the task runner has completed the task and should start looking for a
-				//new task.
-				response = new WorkerHeartbeatResponse(null, WorkerHeartbeatResponse.Cmd.IDLE);
-			}
+		if(hb.getTask() != null && hb.getTask().getPercentComplete() < 100) {
+			parentTT.updateTaskStat(hb.getTaskId(), hb.getTask());
+			//Indicates that this worker is not free
+			setCurrentTask(hb.getTask());
+			//The task runner should continue working on the task.
+			response = new WorkerHeartbeatResponse(null, WorkerHeartbeatResponse.Cmd.POLL);
 		} else {
-			if(getCurrentTask() != null && getCurrentTask().getPercentComplete() == 0) {
-				response = new WorkerHeartbeatResponse(getCurrentTask(), 
-						WorkerHeartbeatResponse.Cmd.RUN_NEW_TASK);
-			} else {
+			if(hb.getTask() != null && hb.getTask().getPercentComplete() == 100) {
+				parentTT.updateTaskStat(hb.getTaskId(), hb.getTask());
+				//Indicates to task tracker that worker is free
+				setCurrentTask(null);
 				response = new WorkerHeartbeatResponse(null, WorkerHeartbeatResponse.Cmd.IDLE);
+				System.out.println("Worker finished task " + hb.getTask().getTaskId());
+			} else {
+				if(getCurrentTask() != null) {
+					Task t = getCurrentTask();
+					System.out.println("Task Tracker " + parentTT.getId() + " Worker " + 
+					managerId + " starting task " + t.getTaskId());
+					response = new WorkerHeartbeatResponse(t
+							, WorkerHeartbeatResponse.Cmd.RUN_NEW_TASK);
+				} else {
+					response = new WorkerHeartbeatResponse(null, 
+							WorkerHeartbeatResponse.Cmd.IDLE);
+				}
 			}
 		}
-		
 		return response;
 	}
 
@@ -122,7 +131,30 @@ public class TaskManager implements Runnable {
 	 * Create a new Java process. 
 	 */
 	public void startTaskRunner() {
+		if(workerProcess != null) {
+			workerProcess.destroy();
+		}
+		try {
+			
+			String jar = "/home/mayank/DistributedSystems/HW3/simple-hadoop.jar";
+			String className = TASK_RUNNER_CLASS;
 		
+			String javaHome = System.getProperty("java.home");
+	        String javaBin = javaHome + File.separator + "bin" + 
+	        		File.separator + "java";
+	
+	        ProcessBuilder builder = new ProcessBuilder(
+	                javaBin, "-cp", jar, className, this.port + "");
+	
+	        workerProcess = builder.start();
+	        
+	        InputStream in = workerProcess.getInputStream();
+	        BufferedReader br = new BufferedReader(new InputStreamReader(in));
+	        System.out.println(br.readLine());
+	        
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
         

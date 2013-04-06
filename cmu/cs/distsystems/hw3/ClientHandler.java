@@ -4,15 +4,20 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
+import cmu.cs.distsystems.hw3.JobStatus.JobState;
+
 public class ClientHandler implements Runnable {
 
-    Socket client;
     JobTracker jobTracker;
 
+    public ClientHandler(JobTracker jobTracker){
+        this.jobTracker = jobTracker;
+    }
 
     private List<Task> getMapTasks(Job job){
 
@@ -45,67 +50,79 @@ public class ClientHandler implements Runnable {
         for(Task t:reduceTasks){
             js.reduceTasks.put(t.getTaskId(),t);
         }
+        
     }
 
     private void setUpJob(Job job){
-
+    	//Create the job status object.
         JobStatus js = new JobStatus(job);
         List<Task> mapTasks = getMapTasks(job);
         List<Task> reduceTasks = getReduceTasks(job);
 
         setJobStatus(js,mapTasks,reduceTasks);
+        js.setJobState(JobState.PENDING);
 
+        //Insert into the map
+        jobTracker.getStatus().put(job.getId(), js);
+        
+        //Insert all tasks into pending queue
         for(Task task:mapTasks){
-            jobTracker.pendingTasks.add(task);
+            jobTracker.getPendingMapTasks().add(task);
         }
         for(Task task:reduceTasks){
-            jobTracker.pendingTasks.add(task);
+            jobTracker.getPendingReduceTasks().add(task);
         }
 
-        jobTracker.status.put(job.getId(),js);
-
-    }
-
-    private String getMessage(JobStatus js){
-        return "update~";
-    }
-
-    public ClientHandler(Socket client,JobTracker jobTracker){
-        this.client = client;
-        this.jobTracker = jobTracker;
     }
 
     @Override
     public void run() {
-
-        try {
-            ObjectOutputStream oos = new ObjectOutputStream(client.getOutputStream());
-            oos.writeObject(JobTracker.getNewJobId());
-
-            ObjectInputStream ois = new ObjectInputStream(client.getInputStream());
-            Job job = (Job)ois.readObject();
-
-            setUpJob(job);
-
-            PrintWriter pw = new PrintWriter(client.getOutputStream());
-
-            JobStatus js = jobTracker.status.get(job.getId());
-
-            while(!js.jobFinished){
-                try {
-                    Thread.sleep(3000);
-                    pw.write(getMessage(js));
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-
+    	ServerSocket server = null;
+    	try {
+    		server = new ServerSocket(jobTracker.getClientCommPort());
+    		
+    		Socket clientSocket;
+    		
+    		while(true) {
+	    		clientSocket = server.accept();
+	    		ObjectInputStream ois = new ObjectInputStream(clientSocket.getInputStream());
+				
+				Job job = (Job)ois.readObject();
+				
+				if(job.getId() == -1) {
+					job.setId(JobTracker.getNextJobId());
+					setUpJob(job);
+				}
+				
+				JobStatus status = jobTracker.getStatus().get(job.getId());
+				
+				JobProgress progress = new JobProgress(job.getId());
+				//TODO: set this properly
+				progress.setPercentMapTaskFinished(0);
+				progress.setPercentReduceTaskFinished(0);
+				progress.setState(status.getJobState());
+				
+				ObjectOutputStream oos = new ObjectOutputStream(clientSocket.getOutputStream());
+				oos.writeObject(progress);
+				oos.flush();
+				
+				ois.close();
+				oos.close();
+				clientSocket.close();
+    		}
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    	} finally {
+    		try {
+    			if(server != null) {
+    				server.close();
+    			}
+    		} catch (Exception e) {
+    			e.printStackTrace();
+    		}
+    	}
+    	
+    	
     }
+
 }

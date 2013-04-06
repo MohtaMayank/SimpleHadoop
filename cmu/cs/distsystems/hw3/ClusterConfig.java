@@ -1,6 +1,9 @@
 package cmu.cs.distsystems.hw3;
 
+import java.net.InetAddress;
+import java.util.ArrayList;
 import java.util.List;
+
 
 /**
  * This class holds the configurations for the cluster 
@@ -10,7 +13,8 @@ public class ClusterConfig {
 	private String configFile;
 	
 	private String jobTrackerHost;
-	private int jobTrackerPort;
+	private int jobTrackerWorkerCommPort;
+	private int jobTrackerClientCommPort;
 	private int numWorkers;
 	private List<WorkerConfig> workers;
 	
@@ -24,18 +28,40 @@ public class ClusterConfig {
 	 * Parse the configuration file and populate all the 
 	 * fields in configuration
 	 */
+	//TODO: Convert this to suitable config file
 	public void parseConfigFile() {
+		jobTrackerHost = "localhost";
+		jobTrackerClientCommPort = 4000;
+		jobTrackerWorkerCommPort = 5000;
+		numWorkers = 2;
+		workers = new ArrayList<WorkerConfig>();
+		
+		try {
+			WorkerConfig w1 = new WorkerConfig(
+					InetAddress.getLocalHost().getHostName(), 5001);
+			w1.setNumMapSlots(2);
+			w1.setNumReduceSlots(2);
+			workers.add(w1);
+			
+			WorkerConfig w2 = new WorkerConfig(
+					InetAddress.getLocalHost().getHostName(), 5010);
+			w2.setNumMapSlots(2);
+			w2.setNumReduceSlots(2);
+			workers.add(w2);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		
 	}
 	
 	/**
 	 * Returns the worker  config object corresponding to the worker.
-	 * @param hostname
+	 * @param id: "hostname:port"
 	 * @return
 	 */
-	public WorkerConfig getWorkerConfig(String hostname) {
+	public WorkerConfig getWorkerConfig(String id) {
 		for(WorkerConfig config : this.workers) {
-			if(config.getHostName().equals(hostname)) {
+			if(config.getUid().equals(id)) {
 				return config;
 			}
 		}
@@ -50,8 +76,12 @@ public class ClusterConfig {
 		return jobTrackerHost;
 	}
 
-	public int getJobTrackerPort() {
-		return jobTrackerPort;
+	public int getJobTrackerWorkerCommPort() {
+		return jobTrackerWorkerCommPort;
+	}
+
+	public int getJobTrackerClientCommPort() {
+		return jobTrackerClientCommPort;
 	}
 
 	public int getNumWorkers() {

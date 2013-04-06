@@ -26,9 +26,8 @@ public class Job implements Serializable {
 
 	private List<Split> splits;
 	
-	public Job(int id) {
-		this.id = id;
-		
+	public Job() {
+		this.id = -1;
 	}
 
 	public int getId() {

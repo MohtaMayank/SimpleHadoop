@@ -1,5 +1,7 @@
 package cmu.cs.distsystems.hw3;
 
+import java.io.Serializable;
+
 
 /**
  * Represents a partition of file. A "split" which is typically
@@ -7,7 +9,7 @@ package cmu.cs.distsystems.hw3;
  * partitions 
  * @author mayank
  */
-public class FilePartition {
+public class FilePartition implements Serializable {
 	private String fileName; //File name
 	private long start;	//start offset 
 	private long end;	//end offset

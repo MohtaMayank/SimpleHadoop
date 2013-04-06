@@ -1,7 +1,9 @@
 package cmu.cs.distsystems.hw3;
 
+import java.io.Serializable;
 
-public class TaskTrackerHBResponse {	
+
+public class TaskTrackerHBResponse implements Serializable {	
 	public enum Cmd {
 		INIT,	//In response to task trackers message with id -1. Ask TT to initialize
 		NEW_TASK,	//If there is a new task

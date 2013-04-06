@@ -1,8 +1,15 @@
 package cmu.cs.distsystems.hw3;
 
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+
+import cmu.cs.distsystems.hw3.JobStatus.JobState;
+import cmu.cs.distsystems.hw3.TaskTrackerHBResponse.Cmd;
 
 /**
  * JobTracker starts and maintains the MapReduce Job.
@@ -13,19 +20,58 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class JobTracker {
 
+	static int nextJobId = 0;
+	static int nextTaskId = 0;
+
+	private ClusterConfig clusterConfig;
 	
-	/**
-	 * 
-	 */
+	private String host;
+    private int workerCommPort;
+    private int clientCommPort;
+    
+    private Queue<Task> pendingMapTasks;
+    private Queue<Task> pendingReduceTasks;
+    private Map<Integer,JobStatus> status;
 
-    String host;
-    int port;
-    static int nextJobId = 0;
-    static int nextTaskId = 0;
-    Queue<Task> pendingTasks = new ConcurrentLinkedQueue<Task>();
-    Map<Integer,JobStatus> status = new ConcurrentHashMap<Integer, JobStatus>();
+    public JobTracker(ClusterConfig clusterConfig) {
+    	this.clusterConfig = clusterConfig;
+    	this.workerCommPort = clusterConfig.getJobTrackerWorkerCommPort();
+    	this.clientCommPort = clusterConfig.getJobTrackerClientCommPort();
+    	
+        pendingMapTasks = new ConcurrentLinkedQueue<Task>();
+        pendingReduceTasks = new ConcurrentLinkedQueue<Task>();
+        status = new ConcurrentHashMap<Integer, JobStatus>();
+    }
+    
+    public String getHost() {
+		return host;
+	}
+
+	public int getWorkerCommPort() {
+		return workerCommPort;
+	}
+
+	public int getClientCommPort() {
+		return clientCommPort;
+	}
+
+	public static int getNextJobId() {
+		return nextJobId;
+	}
+
+	public Queue<Task> getPendingMapTasks() {
+		return pendingMapTasks;
+	}
+
+	public Queue<Task> getPendingReduceTasks() {
+		return pendingReduceTasks;
+	}
 
 
+	public Map<Integer, JobStatus> getStatus() {
+		return status;
+	}    
+    
     public static synchronized int getNewJobId(){
         nextJobId++;
         return nextJobId;
@@ -36,18 +82,117 @@ public class JobTracker {
         return nextTaskId;
     }
 
-
-
-
 	public void run() {
+		//Launch thread that will communicate with the clients.
+		Thread clientThread = new Thread(new ClientHandler(this));
+		clientThread.start();
+		
+		//set up loop to communicate with workers.
+    	ServerSocket server = null;
+    	try {
+    		server = new ServerSocket(workerCommPort);
+    		
+    		Socket clientSocket;
+    		
+    		while(true) {
+	    		clientSocket = server.accept();
+	    		ObjectInputStream ois = new ObjectInputStream(clientSocket.getInputStream());
+				
+	    		TaskTrackerHB taskTrackerHB = (TaskTrackerHB)ois.readObject();
+				
+	    		//System.out.println("Received response from TT " + taskTrackerHB.getTaskTrackerId());
+	    		
+	    		TaskTrackerHBResponse resp = handleHeartbeat(taskTrackerHB);
+	    		
+				ObjectOutputStream oos = new ObjectOutputStream(clientSocket.getOutputStream());
+				oos.writeObject(resp);
+				oos.flush();
+				
+				ois.close();
+				oos.close();
+				clientSocket.close();
+    		}
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    	} finally {
+    		try {
+    			if(server != null) {
+    				server.close();
+    			}
+    		} catch (Exception e) {
+    			e.printStackTrace();
+    		}
+    	}
 
 	}
 	
+	private TaskTrackerHBResponse handleHeartbeat(TaskTrackerHB hb) {
+		TaskTrackerHBResponse resp;
+		
+		//Update all statuses from the heartbeat
+		for(Task t : hb.getTasksSnapshot()) {
+			int jobId = t.getParentJob().getId();
+			JobStatus jobStatus = status.get(jobId);
+			if(t instanceof MapTask) {
+				if(t.getState() == TaskState.FAILED) {
+					//If any job fails more than a certain number then mark job as failed
+					if(t.getAttemptNum() > 3) {
+						jobStatus.setJobState(JobState.FAILED);
+					} else {
+						t.setTaskState(TaskState.PENDING);
+						t.setPercentComplete(0);
+						t.setAttemptNum(t.getAttemptNum() + 1);
+						jobStatus.getMapTasks().put(t.getTaskId(), t);
+						pendingMapTasks.add(t);
+					}
+					
+				} else {
+					jobStatus.getMapTasks().put(t.getTaskId(), t);
+				}
+			} else if (t instanceof ReduceTask) {
+				if(t instanceof MapTask) {
+					if(t.getState() == TaskState.FAILED) {
+						//If any job fails more than a certain number then mark job as failed
+						if(t.getAttemptNum() > 3) {
+							jobStatus.setJobState(JobState.FAILED);
+						} else {
+							t.setTaskState(TaskState.PENDING);
+							t.setPercentComplete(0);
+							t.setAttemptNum(t.getAttemptNum() + 1);
+							jobStatus.getMapTasks().put(t.getTaskId(), t);
+							pendingReduceTasks.add(t);
+						}
+						
+					} else {
+						jobStatus.getReduceTasks().put(t.getTaskId(), t);
+					}
+				}
+			}
+		}
+		
+		
+		//Assign new task to the worker
+		if(hb.getNumFreeMapSlots() > 0 && pendingMapTasks.size() > 0 ) {
+			resp = new TaskTrackerHBResponse(pendingMapTasks.poll(), 
+					TaskTrackerHBResponse.Cmd.NEW_TASK);
+		} else if(hb.getNumFreeReduceSlots() > 0 && pendingReduceTasks.size() > 0 ) {
+			resp = new TaskTrackerHBResponse(pendingReduceTasks.poll(), 
+					TaskTrackerHBResponse.Cmd.NEW_TASK);
+		}  else {
+			resp = new TaskTrackerHBResponse(null, 
+					TaskTrackerHBResponse.Cmd.POLL);
+		}
+		
+		return resp;
+		
+	}
+
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
-
+		JobTracker jt = new JobTracker( new ClusterConfig(args[0]) );
+		jt.run();
 	}
 
 }

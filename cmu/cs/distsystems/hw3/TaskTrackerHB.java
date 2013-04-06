@@ -9,6 +9,7 @@ import java.util.List;
  *
  */
 public class TaskTrackerHB implements Serializable {
+
 	private static final long serialVersionUID = 1L;
 	
 	private String taskTrackerId;
@@ -16,7 +17,7 @@ public class TaskTrackerHB implements Serializable {
 	private int numFreeReduceSlots;
 	private boolean isInitHB;
 	
-	//These 2 also consists all statistics about the map / reduce tasks
+	//These consists all statistics about the map / reduce tasks
 	List<Task> tasksSnapshot;
 
 	/**
@@ -34,6 +35,29 @@ public class TaskTrackerHB implements Serializable {
 		this.isInitHB = isInitHB;
 		this.tasksSnapshot = taskSnapshot;
 	}
+	
+	
+
+	public String getTaskTrackerId() {
+		return taskTrackerId;
+	}
+
+	public int getNumFreeMapSlots() {
+		return numFreeMapSlots;
+	}
+
+	public int getNumFreeReduceSlots() {
+		return numFreeReduceSlots;
+	}
+
+	public boolean isInitHB() {
+		return isInitHB;
+	}
+
+	public List<Task> getTasksSnapshot() {
+		return tasksSnapshot;
+	}
+
 	
 	/**
 	 * @param args

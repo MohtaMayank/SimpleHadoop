@@ -5,6 +5,7 @@ import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,13 +22,13 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 
 public class TaskTracker {
-
 	public enum WorkerType {
 		MAPPER,
 		REDUCER
 	}
 	
 	private String id;
+	private int port;
 	
 	private ClusterConfig clusterConfig;
 	
@@ -38,8 +39,13 @@ public class TaskTracker {
 	private ConcurrentHashMap<Integer, Task> runningTaskStats;
 	
 	public TaskTracker(int port, ClusterConfig clusterConfig) {
+		this.port = port;
 		this.clusterConfig = clusterConfig;
 		this.taskMgrCounter = 0;
+		
+		managers = new HashMap<Integer, TaskManager>();
+		runningTaskStats = new ConcurrentHashMap<Integer, Task>();
+		
 		try {
 			this.id = InetAddress.getLocalHost().getHostName() + ":" + port;
 		} catch (Exception e) {
@@ -75,7 +81,7 @@ public class TaskTracker {
 		Socket socket = null;
 		try {
 			socket = new Socket(clusterConfig.getJobTrackerHost(), 
-					clusterConfig.getJobTrackerPort());
+					clusterConfig.getJobTrackerWorkerCommPort());
 			
 			ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
 			TaskTrackerHB hb = new TaskTrackerHB(id, getFreeMapperSlots(), getFreeReducerSlots(), true, null);
@@ -99,6 +105,15 @@ public class TaskTracker {
 		}
 		
 	}
+	
+	
+	public void startAllWorkers() {
+		for(TaskManager mgr : managers.values()) {
+			Thread t = new Thread(mgr);
+			t.start();
+		}
+	}
+	
 	
 	private int getFreeMapperSlots() {
 		int freeMapSlots = 0;
@@ -151,8 +166,8 @@ public class TaskTracker {
 				System.out.println("Invalid task type ... Ignoring");
 			}
 			
-		} else if(resp.getCommand() == TaskTrackerHBResponse.Cmd.NEW_TASK) {
-			
+		} else if(resp.getCommand() == TaskTrackerHBResponse.Cmd.POLL) {
+			//Do nothing
 		}
 		
 	}
@@ -162,11 +177,12 @@ public class TaskTracker {
 	 * response from the JobTracker, perform required actions
 	 */	
 	public void run() throws Exception {
+		
 		while(true) {
 			Socket socket = null;
 			try {
 				socket = new Socket(clusterConfig.getJobTrackerHost(), 
-						clusterConfig.getJobTrackerPort());
+						clusterConfig.getJobTrackerWorkerCommPort());
 				
 				//Send heart-beat to job tracker.
 				ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
@@ -240,6 +256,31 @@ public class TaskTracker {
 		this.runningTaskStats.put(taskId, task);
 	}
 	
+	public String getId() {
+		return id;
+	}
+
+	public int getPort() {
+		return port;
+	}
+
+	public ClusterConfig getClusterConfig() {
+		return clusterConfig;
+	}
+
+	public int getTaskMgrCounter() {
+		return taskMgrCounter;
+	}
+
+	public Map<Integer, TaskManager> getManagers() {
+		return managers;
+	}
+
+	public ConcurrentHashMap<Integer, Task> getRunningTaskStats() {
+		return runningTaskStats;
+	}
+
+	
 	
 	public static void main(String[] args) {
 		TaskTracker taskTracker = null;
@@ -251,8 +292,8 @@ public class TaskTracker {
 		taskTracker = new TaskTracker(port, clusterConfig);
 		
 		try {
-			taskTracker.initialize();
-			
+			//taskTracker.initialize();
+			taskTracker.startAllWorkers();
 			taskTracker.run();
 		} catch (Exception e) { 
 			System.out.println("Task Tracker " + taskTracker.id + " failed!");

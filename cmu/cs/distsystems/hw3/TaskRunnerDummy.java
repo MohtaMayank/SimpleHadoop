@@ -21,29 +21,29 @@ import cmu.cs.distsystems.hw3.WorkerHeartbeatResponse.Cmd;
  * @author mayank
  */
 
-public class TaskRunner {
+public class TaskRunnerDummy {
 
 	private int port;
 	private Task currentTask;
 	private ExecutorService es;
 	
-	public TaskRunner(int port) {
+	public TaskRunnerDummy(int port) {
 		this.port = port;
 		es = Executors.newFixedThreadPool(1);
+		this.currentTask = null;
 	}
 	
 	public void run() throws Exception {
 		while(true) {
+			Thread.sleep(500);
 			Socket socket = null;
 			try {
 				socket = new Socket("localhost", port);
 				
-				
-				
 				WorkerHeartbeat hb = new WorkerHeartbeat(createSnapshot());
 				//Send heart-beat to job tracker.
 				ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-				oos.writeObject((Object)hb);
+				oos.writeObject(hb);
 				oos.flush();
 				
 				//Receive response from job tracker.
@@ -70,6 +70,10 @@ public class TaskRunner {
 	private Task createSnapshot() {
 		//Return the status of the current task which is executing
 		Task snapshot;
+		if(currentTask == null) {
+			return null;
+		}
+		
 		if(currentTask instanceof MapTask) {
 			snapshot = new MapTask((MapTask)currentTask);
 		} else if(currentTask instanceof ReduceTask) {
@@ -82,7 +86,7 @@ public class TaskRunner {
 
 	private void handleResponse(WorkerHeartbeatResponse resp) {
 		if(resp.getCommand() == Cmd.IDLE) {
-			//Do nothing.
+			currentTask = null;
 		} else if(resp.getCommand() == Cmd.POLL) {
 			//Do nothing
 		} else if(resp.getCommand() == Cmd.RUN_NEW_TASK) {
@@ -103,52 +107,12 @@ public class TaskRunner {
 	public synchronized Task getCurrentTask() {
 		return currentTask;
 	}
-		
-	/**
-	 * test
-	 */
-	/*
-	public static void main(String[] args) {
-		try {
-		
-			int port = Integer.parseInt(args[0]);
-			
-			
-			
-			String jar = "/home/mayank/DistributedSystems/test.jar";
-			String mapClassName = "Test";
-		
-			String javaHome = System.getProperty("java.home");
-	        String javaBin = javaHome + File.separator + "bin" + 
-	        		File.separator + "java";
-	
-	        ProcessBuilder builder = new ProcessBuilder(
-	                javaBin, "-cp", jar, mapClassName, "Mayank", "Yuchen", "Spaghetti Monster");
-	
-	        Process process = builder.start();
-	        
-	        InputStream in = process.getInputStream();
-	        BufferedReader br = new BufferedReader(new InputStreamReader(in));
-	        
-	        String line = null;
-	        while( (line = br.readLine()) != null ) {
-	        	System.out.println(line);
-	        }
-	        
-	        
-	        process.waitFor();
-	        System.out.println("Exit Value: " + process.exitValue());
-        
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-	}*/
 	
 	public static void main(String[] args) {
 		try {
 			int port = Integer.parseInt(args[0]);
-			TaskRunner runner = new TaskRunner(port);
+			System.out.println("Starting worker at port " + port + "...");
+			TaskRunnerDummy runner = new TaskRunnerDummy(port);
 			runner.run();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -168,36 +132,20 @@ class Worker implements Runnable {
 	
 	@Override
 	public void run() {
-		if(task instanceof MapTask) {
-			try {
+		try {
+			if(task instanceof MapTask) {
+				System.out.println("Received map task split: " + ((MapTask)task).getMySplit());
+				Thread.sleep(1500);
+				task.setPercentComplete(100);
+			} else if(task instanceof ReduceTask) {
 				
-				MapTask mapTask = (MapTask)task;
+			} else {
 				
-				String jar = mapTask.getParentJob().getJar();
-				String mapClassName = mapTask.getParentJob().getMapClass();
-				
-				Class<?> mapClazz = loadClass(jar, mapClassName);
-				Constructor<?> constructor = mapClazz.getConstructor();
-                Mapper mapper = (Mapper) constructor.newInstance(mapTask);
-                mapper.run();
-
-				
-
-		        
-		        
-			} catch (Exception e) {
-				//TODO: Handle this properly
-				e.printStackTrace();
 			}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-
 		
-	}
-	
-	public Class<?> loadClass(String dir, String className) throws Exception {
-		URL[] urls = new URL[]{new URL(dir)};
-		URLClassLoader loader = new URLClassLoader(urls);
-		return loader.loadClass(className);
 	}
 	
 }

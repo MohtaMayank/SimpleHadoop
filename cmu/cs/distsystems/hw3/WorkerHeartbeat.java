@@ -1,6 +1,8 @@
 package cmu.cs.distsystems.hw3;
 
-public class WorkerHeartbeat {
+import java.io.Serializable;
+
+public class WorkerHeartbeat implements Serializable {
 
 	private Task currentTask;
 	

@@ -1,5 +1,6 @@
 package cmu.cs.distsystems.hw3;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,9 +11,9 @@ import java.util.List;
  * @author mayank
  *
  */
-public class Split {
+public class Split implements Serializable {
 
-    final static long defaultSize = 64000000;
+    final static long MAX_SPLIT_SIZE = 10000;
 	FilePartition filePartition;
 	
 	public Split(FilePartition fp) {
@@ -23,9 +24,9 @@ public class Split {
 		return filePartition;
 	}
 	
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
+	@Override
+	public String toString() {
+		return filePartition.getFileName() + "<" + filePartition.getStart()
+				+ "," + filePartition.getEnd() + ">";
 	}
-
 }
