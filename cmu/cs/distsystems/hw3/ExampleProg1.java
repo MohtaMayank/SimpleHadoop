@@ -12,9 +12,9 @@ public class ExampleProg1 {
 		//TODO: implement this ... currently not implemented
 		job.setConfigFile("");
 		
-		job.setJar("/home/mayank/workspace/DistributedSystems/example1.jar");
-		job.setInputDir("/home/mayank/DistributedSystems/HW3/input/");
-		job.setOutputDir("/home/mayank/DistributedSystems/HW3/output/");
+		job.setJar("/Users/mimighostipad/Desktop/HW3/DistributedSystems.jar");
+		job.setInputDir("/Users/mimighostipad/Desktop/HW3/input/");
+		job.setOutputDir("/Users/mimighostipad/Desktop/HW3/output/");
 		
 		job.setNumReducers(2);
 		

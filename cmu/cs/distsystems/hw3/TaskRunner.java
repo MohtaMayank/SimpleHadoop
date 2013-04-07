@@ -1,11 +1,6 @@
 package cmu.cs.distsystems.hw3;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.PrintWriter;
+import java.io.*;
 import java.lang.reflect.Constructor;
 import java.net.Socket;
 import java.net.URL;
@@ -169,8 +164,11 @@ class MapWorker implements Runnable {
     	this.task = task;
     	try {
     	this.logsWriter = new FileWriter(
-    			new File(task.getParentJob().getTmpMapOpDir() + "logs.txt"), true);
-    	} catch (Exception e) {
+    			new File(task.getParentJob().getTmpMapOpDir() + "logs.txt"));
+        this.logsWriter.write("I am all set!" + "\n");
+        logsWriter.flush();
+
+        } catch (Exception e) {
     		e.printStackTrace();
     	}
     }
@@ -185,34 +183,51 @@ class MapWorker implements Runnable {
 
         Class<?> mapClazz;
         try {
-        	logsWriter.append("HERE!\n");
-        	this.task.setPercentComplete(100);
-        	
+        	logsWriter.write("HERE!\n");
+            logsWriter.flush();
+
             mapClazz = TaskRunner.loadClass(jar, mapClassName);
-            Constructor<?> constructor = mapClazz.getConstructor();
-            Mapper mapper = (Mapper) constructor.newInstance();
+
+            logsWriter.write("Load!!!!\n" + mapClazz.getName()+"\n");
+            logsWriter.flush();
+
+            //Constructor<?> constructor = mapClazz.getConstructor();
+
+            logsWriter.write("Constructor!!!!\n");
+            logsWriter.flush();
+
+            Mapper mapper = (Mapper) mapClazz.newInstance();
 
             mapper.init(mapTask);
             
-            logsWriter.append("INIT!\n");
+            logsWriter.write("INIT!\n");
             logsWriter.flush();
 
             TextRecordReader reader = mapper.reader;
             Record<String,String> record = reader.readNextRecord();
 
+            logsWriter.write("INIT!\n" + mapper.context.reducerNum + "\n");
+            logsWriter.flush();
+
+
             while(record != null){
+                logsWriter.write("key=" + record.getKey() + "\n");
                 mapper.map(record.getKey(), record.getValue(), mapper.context);
                 record = reader.readNextRecord();
             }
             
             mapper.context.flush();
-            
-            
+
+            this.task.setPercentComplete(100);
+
+
+
         } catch (Exception e) {
         	try {
-        		logsWriter.append("ERROR!! \n");
-        		logsWriter.append(e.getCause().getMessage() + "\n");
-        		logsWriter.flush();
+        		logsWriter.write("ERROR!! \n");
+                e.printStackTrace(new PrintStream(new FileOutputStream(new File(task.getParentJob().getTmpMapOpDir() + "err.txt"))));
+                logsWriter.flush();
+                //logsWriter.write(e.getCause().getMessage() + "\n");
         	} catch (IOException ioe) {
         		
         	}

@@ -7,13 +7,13 @@ public class Context {
 
     private int taskId;
     private String outputDir;
-    private int reducerNum;
+    public int reducerNum;
     private Map<Integer, List<Record<String,String>>> buffer;
     private Map<Integer, TextRecordWriter> partitions;
 
 
     private String getPartitionFilename(String dir, int taskId, int paritionId){
-        return dir + "_" + paritionId + "_" + taskId;
+        return dir + "_" + paritionId + "_" + taskId + ".txt";
     }
 
     public Context(int taskId, String outputDir, int reducerNum){
@@ -38,7 +38,7 @@ public class Context {
 
     public void write(Record<String,String> record){
         String key = record.getKey();
-        int hash = key.hashCode()%this.reducerNum;
+        int hash = Math.abs(key.hashCode()) % this.reducerNum;
 
         List<Record<String, String>> records = this.buffer.get(hash);
         records.add(record);
@@ -60,6 +60,12 @@ public class Context {
             }
             writer.close();
         }
+    }
+
+    public static void main(String[] args){
+        Context context = new Context(0,"output",2);
+        Record<String,String> record = new Record<String, String>("1","2");
+        context.write("dfadfasdf","dsfasdfasdfa");
     }
 
 }

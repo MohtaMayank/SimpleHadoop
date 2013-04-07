@@ -9,7 +9,7 @@ public class TextRecordWriter {
 	
 	private String outputFile;
 	private boolean isInit;
-	private FileWriter bw;
+	private BufferedWriter bw;
 	private String delim;
 
 	public TextRecordWriter(String outputFile, String delimiter) {
@@ -28,13 +28,14 @@ public class TextRecordWriter {
 			initialize();
 		}
 		
-		bw.write(record.getKey() + this.delim + record.getValue() + "\n");
+		bw.append(record.getKey() + this.delim + record.getValue() + "\n");
 	}
 	
 	
 	
 	private void initialize() throws IOException {
-		bw = new FileWriter(outputFile, true);
+		bw = new BufferedWriter(new FileWriter(outputFile, true));
+        isInit = true;
 	}
 	
 	public void close() throws IOException {

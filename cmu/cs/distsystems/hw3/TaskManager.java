@@ -136,7 +136,7 @@ public class TaskManager implements Runnable {
 		}
 		try {
 			
-			String jar = "/home/mayank/DistributedSystems/HW3/simple-hadoop.jar";
+			String jar = "/Users/mimighostipad/Desktop/DistributedSystems.jar";
 			String className = TASK_RUNNER_CLASS;
 		
 			String javaHome = System.getProperty("java.home");

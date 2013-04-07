@@ -2,7 +2,7 @@ package cmu.cs.distsystems.hw3;
 
 public abstract class Mapper{
 
-MapTask mapTask;
+    MapTask mapTask;
     TextRecordReader reader;
     Context context;
 
