@@ -13,7 +13,7 @@ public class Context {
 
 
     private String getPartitionFilename(String dir, int taskId, int paritionId){
-        return dir + "_" + paritionId + "_" + taskId + ".txt";
+        return dir + "part." + paritionId + "." + taskId + ".tmp.txt";
     }
 
     public Context(int taskId, String outputDir, int reducerNum){
@@ -48,11 +48,13 @@ public class Context {
         this.write(new Record<String, String>(key, value));
     }
 
-    public void flush() throws IOException {
+    public void flush(boolean sort) throws IOException {
         for(int partitionId:buffer.keySet()){
             List<Record<String,String>>  records = buffer.get(partitionId);
             TextRecordWriter writer = partitions.get(partitionId);
-            Collections.sort(records);
+            if(sort){
+                Collections.sort(records);
+            }
 
             for(Record<String, String> record:records)
             {

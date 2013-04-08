@@ -109,10 +109,11 @@ public class TaskManager implements Runnable {
 				setCurrentTask(null);
 				response = new WorkerHeartbeatResponse(null, WorkerHeartbeatResponse.Cmd.IDLE);
 				System.out.println("Worker finished task " + hb.getTask().getTaskId());
-			} else {
+
+            } else {
 				if(getCurrentTask() != null) {
 					Task t = getCurrentTask();
-					System.out.println("Task Tracker " + parentTT.getId() + " Worker " + 
+					System.out.println("Task Tracker " + parentTT.getId() + " Worker " +
 					managerId + " starting task " + t.getTaskId());
 					response = new WorkerHeartbeatResponse(t
 							, WorkerHeartbeatResponse.Cmd.RUN_NEW_TASK);

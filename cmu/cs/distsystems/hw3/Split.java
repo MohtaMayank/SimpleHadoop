@@ -13,7 +13,7 @@ import java.util.List;
  */
 public class Split implements Serializable {
 
-    final static long MAX_SPLIT_SIZE = 10000;
+    final static long MAX_SPLIT_SIZE = 80000;
 	FilePartition filePartition;
 	
 	public Split(FilePartition fp) {

@@ -38,6 +38,14 @@ class Ex1Combiner {
 	
 }
 
-class Ex1Reducer {
-	
+class Ex1Reducer extends Reducer {
+
+    @Override
+    void reduce(String key, Iterable<String> values, Context context) {
+        int num = 0;
+        for(String value:values){
+            num += Integer.parseInt(value);
+        }
+        context.write(key,Integer.toString(num));
+    }
 }

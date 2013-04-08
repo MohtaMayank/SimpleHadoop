@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 enum TaskState {
 	PENDING,
-	INPROGRESS,
+	RUNNING,
 	SUCCESS,
 	RETRY,
 	FAILED
@@ -93,6 +93,10 @@ abstract public class Task implements Serializable {
 	public synchronized void setEndTime(long endTime) {
 		this.endTime = endTime;
 	}
+
+    public synchronized void setState(TaskState state){
+        this.state = state;
+    }
 
 	public synchronized int getAttemptNum() {
 		return attemptNum;

@@ -82,6 +82,31 @@ public class JobTracker {
         return nextTaskId;
     }
 
+    private Task nextPendingMapTask(){
+
+        Task mapTask = pendingMapTasks.poll();
+        JobStatus js = status.get(mapTask.getParentJob().getId());
+
+        if(js.jobState == JobState.PENDING){
+            js.setJobState(JobState.MAP_RUNNING);
+        }
+
+        return mapTask;
+    }
+
+    private Task nextPendingReduceTask(){
+
+        Task reduceTask = pendingReduceTasks.poll();
+        JobStatus js = status.get(reduceTask.getParentJob().getId());
+
+        if(js.jobState != JobState.REDUCE_RUNNING){
+            js.setJobState(JobState.REDUCE_RUNNING);
+        }
+
+        return reduceTask;
+
+    }
+
 	public void run() {
 		//Launch thread that will communicate with the clients.
 		Thread clientThread = new Thread(new ClientHandler(this));
@@ -99,9 +124,7 @@ public class JobTracker {
 	    		ObjectInputStream ois = new ObjectInputStream(clientSocket.getInputStream());
 				
 	    		TaskTrackerHB taskTrackerHB = (TaskTrackerHB)ois.readObject();
-				
-	    		//System.out.println("Received response from TT " + taskTrackerHB.getTaskTrackerId());
-	    		
+
 	    		TaskTrackerHBResponse resp = handleHeartbeat(taskTrackerHB);
 	    		
 				ObjectOutputStream oos = new ObjectOutputStream(clientSocket.getOutputStream());
@@ -127,7 +150,8 @@ public class JobTracker {
 	}
 	
 	private TaskTrackerHBResponse handleHeartbeat(TaskTrackerHB hb) {
-		TaskTrackerHBResponse resp;
+
+        TaskTrackerHBResponse resp;
 		
 		//Update all statuses from the heartbeat
 		for(Task t : hb.getTasksSnapshot()) {
@@ -150,34 +174,47 @@ public class JobTracker {
 					jobStatus.getMapTasks().put(t.getTaskId(), t);
 				}
 			} else if (t instanceof ReduceTask) {
-				if(t instanceof MapTask) {
-					if(t.getState() == TaskState.FAILED) {
-						//If any job fails more than a certain number then mark job as failed
-						if(t.getAttemptNum() > 3) {
-							jobStatus.setJobState(JobState.FAILED);
-						} else {
-							t.setTaskState(TaskState.PENDING);
-							t.setPercentComplete(0);
-							t.setAttemptNum(t.getAttemptNum() + 1);
-							jobStatus.getMapTasks().put(t.getTaskId(), t);
-							pendingReduceTasks.add(t);
-						}
-						
-					} else {
-						jobStatus.getReduceTasks().put(t.getTaskId(), t);
-					}
-				}
+                if(t.getState() == TaskState.FAILED) {
+                    //If any job fails more than a certain number then mark job as failed
+                    if(t.getAttemptNum() > 3) {
+                        jobStatus.setJobState(JobState.FAILED);
+                    } else {
+                        t.setTaskState(TaskState.PENDING);
+                        t.setPercentComplete(0);
+                        t.setAttemptNum(t.getAttemptNum() + 1);
+                        jobStatus.getMapTasks().put(t.getTaskId(), t);
+                        pendingReduceTasks.add(t);
+                    }
+
+                } else {
+                    jobStatus.getReduceTasks().put(t.getTaskId(), t);
+                }
 			}
+
 		}
-		
-		
+
+        for(int jobId:status.keySet()){
+            JobStatus js = status.get(jobId);
+            js.updateStatus();
+
+            if(js.jobState == JobState.MAP_FINISHED){
+                for(int taskId:js.reduceTasks.keySet()){
+                    Task task = js.reduceTasks.get(taskId);
+                    this.pendingReduceTasks.add(task);
+                }
+                js.setJobState(JobState.REDUCE_RUNNING);
+                System.out.println("Reduce phase");
+            }
+        }
+
+
 		//Assign new task to the worker
 		if(hb.getNumFreeMapSlots() > 0 && pendingMapTasks.size() > 0 ) {
-			resp = new TaskTrackerHBResponse(pendingMapTasks.poll(), 
-					TaskTrackerHBResponse.Cmd.NEW_TASK);
+			Task newTask = nextPendingMapTask();
+            resp = new TaskTrackerHBResponse(newTask, TaskTrackerHBResponse.Cmd.NEW_TASK);
 		} else if(hb.getNumFreeReduceSlots() > 0 && pendingReduceTasks.size() > 0 ) {
-			resp = new TaskTrackerHBResponse(pendingReduceTasks.poll(), 
-					TaskTrackerHBResponse.Cmd.NEW_TASK);
+			Task newTask = nextPendingReduceTask();
+            resp = new TaskTrackerHBResponse(newTask,TaskTrackerHBResponse.Cmd.NEW_TASK);
 		}  else {
 			resp = new TaskTrackerHBResponse(null, 
 					TaskTrackerHBResponse.Cmd.POLL);

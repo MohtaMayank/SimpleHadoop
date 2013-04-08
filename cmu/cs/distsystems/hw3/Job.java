@@ -114,7 +114,9 @@ public class Job implements Serializable {
 		this.splits = splits;
 	}
 
-
+    public int getNumSplits(){
+        return this.splits.size();
+    }
 	
 	
 	/**

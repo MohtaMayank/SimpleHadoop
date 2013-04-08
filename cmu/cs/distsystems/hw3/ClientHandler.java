@@ -69,9 +69,10 @@ public class ClientHandler implements Runnable {
         for(Task task:mapTasks){
             jobTracker.getPendingMapTasks().add(task);
         }
-        for(Task task:reduceTasks){
+
+        /*for(Task task:reduceTasks){
             jobTracker.getPendingReduceTasks().add(task);
-        }
+        }*/
 
     }
 
@@ -97,6 +98,7 @@ public class ClientHandler implements Runnable {
 				JobStatus status = jobTracker.getStatus().get(job.getId());
 				
 				JobProgress progress = new JobProgress(job.getId());
+
 				//TODO: set this properly
 				progress.setPercentMapTaskFinished(0);
 				progress.setPercentReduceTaskFinished(0);

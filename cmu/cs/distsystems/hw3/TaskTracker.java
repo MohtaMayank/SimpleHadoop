@@ -85,7 +85,7 @@ public class TaskTracker {
 			
 			ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
 			TaskTrackerHB hb = new TaskTrackerHB(id, getFreeMapperSlots(), getFreeReducerSlots(), true, null);
-			oos.writeObject((Object)hb);
+			oos.writeObject(hb);
 			oos.flush();
 			
 	        ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
