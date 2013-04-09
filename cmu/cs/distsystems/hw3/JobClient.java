@@ -76,6 +76,10 @@ public class JobClient {
             			(progress.getState() != JobStatus.JobState.FAILED);
             } while (inProgress);
 
+            //Clean up the tmp files in the shared file system.
+            File file = new File(job.getTmpMapOpDir());
+            file.delete();
+            
             System.out.println("Job with job Id: " + progress.getJobId() + " finished " +
             		"with state " + progress.getState());
             

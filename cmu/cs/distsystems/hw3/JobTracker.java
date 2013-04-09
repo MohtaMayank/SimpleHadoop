@@ -218,8 +218,8 @@ public class JobTracker {
 				freeSlots--;
 			}
 		}
-		freeSlots = hb.getNumFreeMapSlots();
-		while (hb.getNumFreeReduceSlots() > 0 && pendingReduceTasks.size() > 0 ) {
+		freeSlots = hb.getNumFreeReduceSlots();
+		while (freeSlots > 0 && pendingReduceTasks.size() > 0 ) {
 			Task newTask = nextPendingReduceTask();
 			if( status.get(newTask.getParentJob().getId()).getJobState() != JobState.FAILED ) {
 				newTasks.add(newTask);

@@ -1,5 +1,6 @@
 package cmu.cs.distsystems.hw3;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -59,6 +60,16 @@ public class ClientHandler implements Runnable {
         List<Task> mapTasks = getMapTasks(job);
         List<Task> reduceTasks = getReduceTasks(job);
 
+        //Make tmp directories in the shared file system
+        File file = new File(job.getOutputDir());
+        if(!file.isDirectory() || !file.exists()) {
+        	System.out.println("Error: Does Output directory exist? Exiting ...");
+        } else {
+        	File tmpDir = new File(job.getTmpMapOpDir());
+        	System.out.println("Creating temporary directory " + job.getTmpMapOpDir());
+        	tmpDir.mkdirs();
+        }
+        
         setJobStatus(js,mapTasks,reduceTasks);
         js.setJobState(JobState.PENDING);
 

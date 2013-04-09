@@ -71,49 +71,12 @@ public class TaskTracker {
 		
 	}
 	
-	/**
-	 * 1. Register self with Job Tracker and get an Id (first heartbeat)
-	 * 2. In the message send information about self like total number of 
-	 * mappers and reducer slots available.
-	 * 2. Initialize and start all the task managers
-	 */
-	public void initialize() throws Exception {
-		Socket socket = null;
-		try {
-			socket = new Socket(clusterConfig.getJobTrackerHost(), 
-					clusterConfig.getJobTrackerWorkerCommPort());
-			
-			ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-			TaskTrackerHB hb = new TaskTrackerHB(id, getFreeMapperSlots(), getFreeReducerSlots(), true, null);
-			oos.writeObject(hb);
-			oos.flush();
-			
-	        ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-	        TaskTrackerHBResponse resp = (TaskTrackerHBResponse)ois.readObject();
-	        
-	        if(resp.getCommand() == TaskTrackerHBResponse.Cmd.INIT) {
-	        	System.out.println("Task Tracker " + id + " successfully registered with Job Tracker");
-	        }
-	
-			oos.close();
-			ois.close();
-		
-		} finally {
-			if(socket != null){
-				socket.close();
-			}
-		}
-		
-	}
-	
-	
 	public void startAllWorkers() {
 		for(TaskManager mgr : managers.values()) {
 			Thread t = new Thread(mgr);
 			t.start();
 		}
 	}
-	
 	
 	private int getFreeMapperSlots() {
 		int freeMapSlots = 0;

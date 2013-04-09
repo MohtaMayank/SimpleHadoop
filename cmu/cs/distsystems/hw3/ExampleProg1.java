@@ -10,7 +10,7 @@ public class ExampleProg1 {
 		job.setReduceClass("cmu.cs.distsystems.hw3.Ex1Reducer");
 		
 		//TODO: implement this ... currently not implemented
-		job.setConfigFile("");
+		job.setConfigFile("/home/mayank/DistributedSystems/HW3/cluster_config.txt");
 		
 		job.setJar("/home/mayank/DistributedSystems/HW3/example1.jar");
 		job.setInputDir("/home/mayank/DistributedSystems/HW3/input/");
