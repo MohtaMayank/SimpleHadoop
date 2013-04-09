@@ -151,15 +151,15 @@ public class JobTracker {
 	
 	private TaskTrackerHBResponse handleHeartbeat(TaskTrackerHB hb) {
 
-        TaskTrackerHBResponse resp;
+        TaskTrackerHBResponse resp = null;
 		
 		//Update all statuses from the heartbeat
 		for(Task t : hb.getTasksSnapshot()) {
 			int jobId = t.getParentJob().getId();
 			JobStatus jobStatus = status.get(jobId);
-			if(t instanceof MapTask) {
+			if(t.getTaskType() == TaskType.MAP) {
 				if(t.getState() == TaskState.FAILED) {
-					//If any job fails more than a certain number then mark job as failed
+					//If any task fails more than a certain number then mark job as failed
 					if(t.getAttemptNum() > 3) {
 						jobStatus.setJobState(JobState.FAILED);
 					} else {
@@ -173,9 +173,9 @@ public class JobTracker {
 				} else {
 					jobStatus.getMapTasks().put(t.getTaskId(), t);
 				}
-			} else if (t instanceof ReduceTask) {
+			} else if (t.getTaskType() == TaskType.REDUCE ) {
                 if(t.getState() == TaskState.FAILED) {
-                    //If any job fails more than a certain number then mark job as failed
+                    //If any task fails more than a certain number then mark job as failed
                     if(t.getAttemptNum() > 3) {
                         jobStatus.setJobState(JobState.FAILED);
                     } else {
@@ -209,15 +209,29 @@ public class JobTracker {
 
 
 		//Assign new task to the worker
-		if(hb.getNumFreeMapSlots() > 0 && pendingMapTasks.size() > 0 ) {
+        List<Task> newTasks = new ArrayList<Task>();
+        int freeSlots = hb.getNumFreeMapSlots();
+		while (freeSlots > 0 && pendingMapTasks.size() > 0 ) {
 			Task newTask = nextPendingMapTask();
-            resp = new TaskTrackerHBResponse(newTask, TaskTrackerHBResponse.Cmd.NEW_TASK);
-		} else if(hb.getNumFreeReduceSlots() > 0 && pendingReduceTasks.size() > 0 ) {
+			if( status.get(newTask.getParentJob().getId()).getJobState() != JobState.FAILED ) {
+				newTasks.add(newTask);
+				freeSlots--;
+			}
+		}
+		freeSlots = hb.getNumFreeMapSlots();
+		while (hb.getNumFreeReduceSlots() > 0 && pendingReduceTasks.size() > 0 ) {
 			Task newTask = nextPendingReduceTask();
-            resp = new TaskTrackerHBResponse(newTask,TaskTrackerHBResponse.Cmd.NEW_TASK);
-		}  else {
+			if( status.get(newTask.getParentJob().getId()).getJobState() != JobState.FAILED ) {
+				newTasks.add(newTask);
+				freeSlots--;
+			}
+		}
+		
+		if(newTasks.size() == 0) { 
 			resp = new TaskTrackerHBResponse(null, 
 					TaskTrackerHBResponse.Cmd.POLL);
+		} else {
+			resp = new TaskTrackerHBResponse(newTasks, TaskTrackerHBResponse.Cmd.NEW_TASKS);
 		}
 		
 		return resp;

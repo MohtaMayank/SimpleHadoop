@@ -91,9 +91,9 @@ public class TaskRunner {
 			//On any exception, log and fail the complete process.
 			setCurrentTask(resp.getNewTask());
 
-            if(currentTask instanceof MapTask){
+            if(currentTask.getTaskType() == TaskType.MAP){
                 es.submit(new MapWorker(currentTask));
-            } else {
+            } else if (currentTask.getTaskType() == TaskType.REDUCE){
                 es.submit(new ReduceWorker(currentTask));
             }
 
@@ -215,8 +215,6 @@ class MapWorker implements Runnable {
             this.task.setPercentComplete(100);
             this.task.setState(TaskState.SUCCESS);
 
-
-
         } catch (Exception e) {
         	try {
                 this.task.setState(TaskState.FAILED);
@@ -285,7 +283,7 @@ class ReduceWorker implements Runnable {
 
             while(reader.hasNext()){
                 ReduceUnit ru = reader.next();
-                logsWriter.write(ru.key + " " + ru.values.size() + "\n");
+                //logsWriter.write(ru.key + " " + ru.values.size() + "\n");
                 reducer.reduce(ru.key,ru.values,reducer.context);
             }
 
@@ -298,7 +296,7 @@ class ReduceWorker implements Runnable {
         } catch (Exception e) {
             try {
                 this.task.setState(TaskState.FAILED);
-                logsWriter.write("ERROR!! \n");
+                logsWriter.write("ERROR!! Task Id " + this.task.getTaskId() + " failed\n");
                 e.printStackTrace(new PrintStream(
                         new FileOutputStream(new File(task.getParentJob().getOutputDir() + "err.txt"))));
                 logsWriter.flush();

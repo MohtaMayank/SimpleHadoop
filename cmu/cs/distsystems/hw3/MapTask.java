@@ -20,7 +20,7 @@ public class MapTask extends Task {
 	private Split mySplit;
 	
 	public MapTask(Job parentJob, int taskId, Split split) {
-		super(parentJob, taskId);
+		super(parentJob, taskId, TaskType.MAP);
 		
 		this.mySplit = split;
 	}

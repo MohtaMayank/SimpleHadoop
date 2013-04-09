@@ -102,15 +102,14 @@ public class TaskManager implements Runnable {
 			setCurrentTask(hb.getTask());
 			//The task runner should continue working on the task.
 			response = new WorkerHeartbeatResponse(null, WorkerHeartbeatResponse.Cmd.POLL);
-		} else {
-			if(hb.getTask() != null && hb.getTask().getPercentComplete() == 100) {
+		} else if(hb.getTask() != null && hb.getTask().getPercentComplete() == 100) {
 				parentTT.updateTaskStat(hb.getTaskId(), hb.getTask());
 				//Indicates to task tracker that worker is free
 				setCurrentTask(null);
 				response = new WorkerHeartbeatResponse(null, WorkerHeartbeatResponse.Cmd.IDLE);
 				System.out.println("Worker finished task " + hb.getTask().getTaskId());
 
-            } else {
+		} else {
 				if(getCurrentTask() != null) {
 					Task t = getCurrentTask();
 					System.out.println("Task Tracker " + parentTT.getId() + " Worker " +
@@ -121,7 +120,6 @@ public class TaskManager implements Runnable {
 					response = new WorkerHeartbeatResponse(null, 
 							WorkerHeartbeatResponse.Cmd.IDLE);
 				}
-			}
 		}
 		return response;
 	}
@@ -137,7 +135,7 @@ public class TaskManager implements Runnable {
 		}
 		try {
 			
-			String jar = "/Users/mimighostipad/Desktop/DistributedSystems.jar";
+			String jar = "/home/mayank/DistributedSystems/HW3/simple-hadoop.jar";
 			String className = TASK_RUNNER_CLASS;
 		
 			String javaHome = System.getProperty("java.home");

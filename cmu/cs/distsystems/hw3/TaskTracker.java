@@ -149,23 +149,28 @@ public class TaskTracker {
 		
 		if(resp.getCommand() == TaskTrackerHBResponse.Cmd.SHUT_DOWN) {
 			shutdown();
-		} else if(resp.getCommand() == TaskTrackerHBResponse.Cmd.NEW_TASK) {
-			Task newTask = resp.getNewTask();
+		} else if(resp.getCommand() == TaskTrackerHBResponse.Cmd.NEW_TASKS) {
+			List<Task> newTasks = resp.getNewTasks();
 			TaskManager freeWorker;
-			//TODO: Will this work or do we need a taskType variable?
-			if(newTask instanceof MapTask) {
-				freeWorker = getFreeWorker(WorkerType.MAPPER);
-				freeWorker.setCurrentTask(newTask);
-				updateTaskStat(newTask.getTaskId(), newTask);
-			} else if (newTask instanceof ReduceTask) {
-				freeWorker = getFreeWorker(WorkerType.REDUCER);
-				freeWorker.setCurrentTask(newTask);
-				updateTaskStat(newTask.getTaskId(), newTask);
-			} else {
-				//Cannot happen!
-				System.out.println("Invalid task type ... Ignoring");
+
+			for(Task newTask : newTasks ) {
+				if(newTask.getTaskType() == TaskType.MAP) {
+					freeWorker = getFreeWorker(WorkerType.MAPPER);
+					if(freeWorker != null) {
+						freeWorker.setCurrentTask(newTask);
+						updateTaskStat(newTask.getTaskId(), newTask);
+					}
+				} else if (newTask.getTaskType() == TaskType.REDUCE) {
+					freeWorker = getFreeWorker(WorkerType.REDUCER);
+					if(freeWorker != null) {
+						freeWorker.setCurrentTask(newTask);
+						updateTaskStat(newTask.getTaskId(), newTask);
+					}
+				} else {
+					//Cannot happen!
+					System.out.println("Invalid task type ... Ignoring");
+				}
 			}
-			
 		} else if(resp.getCommand() == TaskTrackerHBResponse.Cmd.POLL) {
 			//Do nothing
 		}

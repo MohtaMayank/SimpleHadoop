@@ -40,8 +40,6 @@ public class JobStatus {
 
     public void updateStatus(){
 
-        System.out.println("current state:"+jobState);
-
         if(jobState == JobState.MAP_RUNNING || jobState == JobState.REDUCE_RUNNING){
 
             int numTaskComplete = 0;
@@ -72,8 +70,9 @@ public class JobStatus {
                 }
             }
 
-            System.out.println("finished map tasks:" + this.numFinishedMapTask);
-            System.out.println("map task remains:"+ (this.numTotalMapTask - this.numFinishedMapTask));
+            System.out.println("Job Id " + this.getJob().getId() + 
+            		" completed map tasks: " + this.numFinishedMapTask + "/" + this.numTotalMapTask + 
+            		" completed reduce tasks: " + this.numFinishedReduceTask + "/" + this.numTotalReduceTask);
 
         }
     }
@@ -86,7 +85,7 @@ public class JobStatus {
 		this.job = job;
 	}
 
-	public JobState getJobState() {
+	public synchronized JobState getJobState() {
 		return jobState;
 	}
 

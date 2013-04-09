@@ -10,6 +10,11 @@ enum TaskState {
 	FAILED
 }
 
+enum TaskType {
+	MAP,
+	REDUCE
+}
+
 /**
  * This is the data class representing a specific task in the map-reduce task.
  * An instance of any of its subclass should contain all the information 
@@ -26,15 +31,18 @@ abstract public class Task implements Serializable {
 	private int taskId;
 	
 	private TaskState state;
+	private TaskType taskType;
 	
 	private double percentComplete;
 	private long startTime;
 	private long endTime;
 	private int attemptNum;	
 	
-	public Task(Job parentJob, int taskId) {
+	public Task(Job parentJob, int taskId, TaskType type) {
 		this.parentJob = parentJob;
 		this.taskId = taskId;
+		this.taskType = type;
+		
 		this.state = TaskState.PENDING;
 		this.percentComplete = 0;
 		this.attemptNum = 0;
@@ -49,7 +57,7 @@ abstract public class Task implements Serializable {
 		this.percentComplete = task.getPercentComplete();
 		this.startTime = task.getStartTime();
 		this.endTime = task.getEndTime();
-		
+		this.taskType = task.getTaskType();
 	}
 	
 	
@@ -69,6 +77,9 @@ abstract public class Task implements Serializable {
 		this.state = state;
 	}
 	
+	public TaskType getTaskType() {
+		return this.taskType;
+	}
 	
 	public synchronized double getPercentComplete() {
 		return percentComplete;

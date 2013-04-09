@@ -62,6 +62,10 @@ public class ClientHandler implements Runnable {
         setJobStatus(js,mapTasks,reduceTasks);
         js.setJobState(JobState.PENDING);
 
+        System.out.println("Received new job from client. Job Id = " + job.getId() + 
+        		"Num Map Tasks = " + mapTasks.size() + " Num Reduce partitions " 
+        		+ reduceTasks.size() );
+        
         //Insert into the map
         jobTracker.getStatus().put(job.getId(), js);
         
@@ -69,11 +73,6 @@ public class ClientHandler implements Runnable {
         for(Task task:mapTasks){
             jobTracker.getPendingMapTasks().add(task);
         }
-
-        /*for(Task task:reduceTasks){
-            jobTracker.getPendingReduceTasks().add(task);
-        }*/
-
     }
 
     @Override
@@ -106,6 +105,7 @@ public class ClientHandler implements Runnable {
 				
 				ObjectOutputStream oos = new ObjectOutputStream(clientSocket.getOutputStream());
 				oos.writeObject(progress);
+				
 				oos.flush();
 				
 				ois.close();

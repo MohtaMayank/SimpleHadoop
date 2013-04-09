@@ -76,6 +76,9 @@ public class JobClient {
             			(progress.getState() != JobStatus.JobState.FAILED);
             } while (inProgress);
 
+            System.out.println("Job with job Id: " + progress.getJobId() + " finished " +
+            		"with state " + progress.getState());
+            
         } catch (Exception e) {
             e.printStackTrace();
         } finally {

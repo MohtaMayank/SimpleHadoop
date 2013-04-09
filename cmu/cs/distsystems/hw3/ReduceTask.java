@@ -10,7 +10,7 @@ public class ReduceTask extends Task {
 	int partitionNumber;
 
 	public ReduceTask(Job parentJob, int taskId, int partitionNumber) {
-		super(parentJob, taskId);
+		super(parentJob, taskId, TaskType.REDUCE);
 		this.partitionNumber = partitionNumber;
 	}
 	
