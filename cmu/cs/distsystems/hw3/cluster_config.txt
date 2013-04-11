@@ -8,6 +8,7 @@ jobTrackerHost:mayank-laptop
 jobTrackerClientCommPort:4000
 # Port on which task trackers will communicate with the job tracker.
 jobTrackerWorkerCommPort:6000
+mrJar:./simplemr.jar
 
 # Num Workers. numWorker worker configs should follow.
 numWorkers:2
