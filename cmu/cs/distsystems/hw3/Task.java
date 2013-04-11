@@ -36,8 +36,10 @@ abstract public class Task implements Serializable {
 	private double percentComplete;
 	private long startTime;
 	private long endTime;
-	private int attemptNum;	
+	private int attemptNum;
 	
+	private String taskTrackerId;
+
 	public Task(Job parentJob, int taskId, TaskType type) {
 		this.parentJob = parentJob;
 		this.taskId = taskId;
@@ -115,6 +117,10 @@ abstract public class Task implements Serializable {
 
 	public synchronized void setAttemptNum(int attemptNum) {
 		this.attemptNum = attemptNum;
+	}
+	
+	public String getTaskTrackerId() {
+		return taskTrackerId;
 	}
 
 	@Override

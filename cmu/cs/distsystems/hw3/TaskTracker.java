@@ -26,6 +26,8 @@ public class TaskTracker {
 		MAPPER,
 		REDUCER
 	}
+
+	public static final long JOB_TRACKER_HB_TIME = 500;
 	
 	private String id;
 	private int port;
@@ -178,7 +180,7 @@ public class TaskTracker {
 			}
 			
 			//Sleep for 1 second
-			Thread.sleep(1000);
+			Thread.sleep(JOB_TRACKER_HB_TIME);
 		}
 		
 	}
@@ -206,7 +208,7 @@ public class TaskTracker {
 		
 		//cleanup tasks which have finished.
 		for(Task task : finishedTasks) {
-			runningTaskStats.remove(finishedTasks);
+			runningTaskStats.remove(task.getTaskId());
 		}
 		
 		return taskSnapshot;

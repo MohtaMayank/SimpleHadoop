@@ -77,9 +77,14 @@ public class JobClient {
             } while (inProgress);
 
             //Clean up the tmp files in the shared file system.
-            File file = new File(job.getTmpMapOpDir());
-            file.delete();
-            
+            File dir = new File(job.getTmpMapOpDir());
+            if(dir.exists()){
+                File[] files = dir.listFiles();
+                for(File f : files) {
+                	f.delete();
+                }
+            }
+            dir.delete();
             System.out.println("Job with job Id: " + progress.getJobId() + " finished " +
             		"with state " + progress.getState());
             

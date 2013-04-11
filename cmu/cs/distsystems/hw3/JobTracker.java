@@ -20,8 +20,8 @@ import cmu.cs.distsystems.hw3.TaskTrackerHBResponse.Cmd;
 
 public class JobTracker {
 
-	static int nextJobId = 0;
-	static int nextTaskId = 0;
+	private static int nextJobId = 0;
+	private static int nextTaskId = 0;
 
 	private ClusterConfig clusterConfig;
 	
@@ -31,8 +31,10 @@ public class JobTracker {
     
     private Queue<Task> pendingMapTasks;
     private Queue<Task> pendingReduceTasks;
-    private Map<Integer,JobStatus> status;
-
+    private Map<Integer, JobStatus> status;
+    
+    private Map<String, TaskTrackerHB> lastHeartbeat; 
+    
     public JobTracker(ClusterConfig clusterConfig) {
     	this.clusterConfig = clusterConfig;
     	this.workerCommPort = clusterConfig.getJobTrackerWorkerCommPort();
@@ -41,6 +43,7 @@ public class JobTracker {
         pendingMapTasks = new ConcurrentLinkedQueue<Task>();
         pendingReduceTasks = new ConcurrentLinkedQueue<Task>();
         status = new ConcurrentHashMap<Integer, JobStatus>();
+        lastHeartbeat = new HashMap<String, TaskTrackerHB>();; 
     }
     
     public String getHost() {
@@ -56,6 +59,7 @@ public class JobTracker {
 	}
 
 	public static int getNextJobId() {
+		nextJobId++;
 		return nextJobId;
 	}
 
@@ -72,11 +76,6 @@ public class JobTracker {
 		return status;
 	}    
     
-    public static synchronized int getNewJobId(){
-        nextJobId++;
-        return nextJobId;
-    }
-
     public static synchronized int getNextTaskId(){
         nextTaskId++;
         return nextTaskId;
@@ -114,12 +113,18 @@ public class JobTracker {
 		
 		//set up loop to communicate with workers.
     	ServerSocket server = null;
+    		
+    	Socket clientSocket;
     	try {
     		server = new ServerSocket(workerCommPort);
+    	} catch (Exception e) {
+    		System.out.println("Cannot start job tracker. Quitting ...");
+    		e.printStackTrace();
     		
-    		Socket clientSocket;
+    	}
     		
-    		while(true) {
+    	while(true) {
+    		try {
 	    		clientSocket = server.accept();
 	    		ObjectInputStream ois = new ObjectInputStream(clientSocket.getInputStream());
 				
@@ -134,25 +139,64 @@ public class JobTracker {
 				ois.close();
 				oos.close();
 				clientSocket.close();
-    		}
-    	} catch (Exception e) {
-    		e.printStackTrace();
-    	} finally {
-    		try {
-    			if(server != null) {
-    				server.close();
-    			}
+				
+				checkStaleHosts();
     		} catch (Exception e) {
     			e.printStackTrace();
-    		}
+    			try {
+    				if(server != null) {
+    					server.close();
+    				}
+    				server = new ServerSocket(workerCommPort);
+    			} catch (Exception e2) {
+    				e2.printStackTrace();
+    			}
+    		} 
     	}
 
 	}
 	
+	
+	private void checkStaleHosts() {
+		long currTime = System.currentTimeMillis();
+
+		List<String> staleHostsToRemove = new ArrayList<String>();
+		
+		for(TaskTrackerHB lastHB : lastHeartbeat.values()) {
+			if( currTime - lastHB.getSendTime() > 20*TaskTracker.JOB_TRACKER_HB_TIME) {
+				//This task tracker missed more than allowed heartbeats.
+				staleHostsToRemove.add(lastHB.getTaskTrackerId());
+				System.out.println("Task Tracker " + lastHB.getTaskTrackerId() + " died");
+				for(Task t : lastHB.getTasksSnapshot()) {
+					t.setState(TaskState.PENDING);
+					t.setPercentComplete(0);
+					if(t.getTaskType() == TaskType.MAP) {
+						pendingMapTasks.add(t);
+						System.out.println("Adding task " + t.getTaskId() + 
+								" back to the queue");
+					} else if (t.getTaskType() == TaskType.REDUCE) {
+						System.out.println("Adding task " + t.getTaskId() + 
+								" back to the queue");
+						pendingReduceTasks.add(t);
+					}
+					
+				}
+			}
+		}
+		
+		//Clean up stale hosts.
+		for(String id : staleHostsToRemove) {
+			lastHeartbeat.remove(id);
+		}
+		
+	}
+
 	private TaskTrackerHBResponse handleHeartbeat(TaskTrackerHB hb) {
 
         TaskTrackerHBResponse resp = null;
 		
+        lastHeartbeat.put(hb.getTaskTrackerId(), hb);
+        
 		//Update all statuses from the heartbeat
 		for(Task t : hb.getTasksSnapshot()) {
 			int jobId = t.getParentJob().getId();

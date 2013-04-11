@@ -17,6 +17,8 @@ public class TaskTrackerHB implements Serializable {
 	private int numFreeReduceSlots;
 	private boolean isInitHB;
 	
+	private long sendTime;
+	
 	//These consists all statistics about the map / reduce tasks
 	List<Task> tasksSnapshot;
 
@@ -34,6 +36,7 @@ public class TaskTrackerHB implements Serializable {
 		this.numFreeReduceSlots = numFreeReduceSlots;
 		this.isInitHB = isInitHB;
 		this.tasksSnapshot = taskSnapshot;
+		this.sendTime = System.currentTimeMillis();
 	}
 	
 	
@@ -58,6 +61,9 @@ public class TaskTrackerHB implements Serializable {
 		return tasksSnapshot;
 	}
 
+	public double getSendTime() {
+		return sendTime;
+	}
 	
 	/**
 	 * @param args

@@ -254,7 +254,6 @@ class ReduceWorker implements Runnable {
 
     @Override
     public void run(){
-        //TODO:fill this out~~~
         this.task.setState(TaskState.RUNNING);
         ReduceTask reduceTask = (ReduceTask)task;
         String jar = reduceTask.getParentJob().getJar();

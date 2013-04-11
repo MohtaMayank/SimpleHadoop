@@ -20,6 +20,12 @@ abstract public class Reducer {
         for(File fileEntry:mapDir.listFiles()){
             String path = fileEntry.getAbsolutePath();
             String fileName = fileEntry.getName();
+            
+            //Do not include incomplete files
+            if(fileName.contains(TextRecordWriter.INCOMPLETE_STRING)) {
+            	continue;
+            }
+            
             String[] fields = fileName.split("\\.");
             if(fields.length >= 2 && fields[0].equals("part")){
                 int filePartition = Integer.parseInt(fields[1]);
