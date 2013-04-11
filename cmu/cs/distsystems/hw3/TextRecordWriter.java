@@ -48,11 +48,13 @@ public class TextRecordWriter {
 		bw.flush();
 		bw.close();
 		
-		try {
+/*		FOR DEBUGGING
+ 		try {
 			Thread.sleep(4000);
 		} catch (Exception e) {
 			
-		}
+		}*/
+		
 		//Rename the file to the actual output name.
 		File oldFile = new File(outputFile + tmpSuffix);
 		if(oldFile.exists()) {

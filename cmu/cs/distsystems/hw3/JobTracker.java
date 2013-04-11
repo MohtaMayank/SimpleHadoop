@@ -163,7 +163,7 @@ public class JobTracker {
 		List<String> staleHostsToRemove = new ArrayList<String>();
 		
 		for(TaskTrackerHB lastHB : lastHeartbeat.values()) {
-			if( currTime - lastHB.getSendTime() > 20*TaskTracker.JOB_TRACKER_HB_TIME) {
+			if( currTime - lastHB.getSendTime() > 8*TaskTracker.JOB_TRACKER_HB_TIME) {
 				//This task tracker missed more than allowed heartbeats.
 				staleHostsToRemove.add(lastHB.getTaskTrackerId());
 				System.out.println("Task Tracker " + lastHB.getTaskTrackerId() + " died");
