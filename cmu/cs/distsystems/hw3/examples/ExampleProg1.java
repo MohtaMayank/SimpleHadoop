@@ -18,7 +18,7 @@ public class ExampleProg1 {
 		job.setJar(args[1]);
 		job.setInputDir(args[2]);
 		job.setOutputDir(args[3]);
-
+		
 		/*job.setJar("/Users/mimighostipad/Desktop/HW3/DistributedSystems.jar");
 		job.setInputDir("/Users/mimighostipad/Desktop/HW3/input/");
 		job.setOutputDir("/Users/mimighostipad/Desktop/HW3/output/");*/
