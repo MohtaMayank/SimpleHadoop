@@ -77,6 +77,7 @@ public class JobClient {
                 sock.close();
             	inProgress = (progress.getState() != JobStatus.JobState.SUCCESS) &&
             			(progress.getState() != JobStatus.JobState.FAILED);
+            	System.out.println(progress.getMessage());
             } while (inProgress);
 
             //Clean up the tmp files in the shared file system.

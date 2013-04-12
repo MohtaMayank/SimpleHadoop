@@ -112,6 +112,7 @@ public class ClientHandler implements Runnable {
 				progress.setPercentMapTaskFinished(0);
 				progress.setPercentReduceTaskFinished(0);
 				progress.setState(status.getJobState());
+				progress.setMessage(status.getMessage());
 				
 				ObjectOutputStream oos = new ObjectOutputStream(clientSocket.getOutputStream());
 				oos.writeObject(progress);

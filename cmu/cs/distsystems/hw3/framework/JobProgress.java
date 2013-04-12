@@ -9,6 +9,8 @@ public class JobProgress implements Serializable {
     double percentMapTaskFinished;
     double percentReduceTaskFinished;
     
+    private String message;
+    
     JobStatus.JobState state;
 
 	public JobProgress(int id) {
@@ -46,4 +48,13 @@ public class JobProgress implements Serializable {
 	public void setPercentReduceTaskFinished(double percentReduceTaskFinished) {
 		this.percentReduceTaskFinished = percentReduceTaskFinished;
 	}
+	
+	public String getMessage() {
+		return message;
+	}
+
+	public void setMessage(String message) {
+		this.message = message;
+	}
+
 }

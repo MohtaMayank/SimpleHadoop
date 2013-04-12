@@ -5,7 +5,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class JobStatus {
 
-    public enum JobState {
+	public enum JobState {
 		PENDING,
 		MAP_RUNNING,
         MAP_FINISHED,
@@ -25,6 +25,7 @@ public class JobStatus {
     private int numTotalReduceTask;
     private int numFinishedMapTask;
     private int numFinishedReduceTask;
+    private String message;
 	
 	public JobStatus(Job job) {
 		this.job = job;
@@ -69,10 +70,12 @@ public class JobStatus {
                     setJobState(JobState.SUCCESS);
                 }
             }
-
-            System.out.println("Job Id " + this.getJob().getId() + 
+            
+            this.message = "Job Id " + this.getJob().getId() + 
             		" completed map tasks: " + this.numFinishedMapTask + "/" + this.numTotalMapTask + 
-            		" completed reduce tasks: " + this.numFinishedReduceTask + "/" + this.numTotalReduceTask);
+            		" completed reduce tasks: " + this.numFinishedReduceTask + "/" + this.numTotalReduceTask;
+
+            System.out.println(message);
 
         }
     }
@@ -107,6 +110,14 @@ public class JobStatus {
 
 	public void setReduceTasks(Map<Integer, Task> reduceTasks) {
 		this.reduceTasks = reduceTasks;
+	}
+
+    public String getMessage() {
+		return message;
+	}
+
+	public void setMessage(String message) {
+		this.message = message;
 	}
 
 }
