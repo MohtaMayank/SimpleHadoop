@@ -104,7 +104,7 @@ public class Job implements Serializable {
 	}
 	
 	public String getTmpMapOpDir() {
-		return outputDir + "/tmp" + getId() + "/";
+		return outputDir + "tmp" + getId() + "/";
 	}
 
 	public List<Split> getSplits() {
