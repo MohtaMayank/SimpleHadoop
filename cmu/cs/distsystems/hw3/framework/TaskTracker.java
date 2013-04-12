@@ -147,6 +147,8 @@ public class TaskTracker {
 	 * response from the JobTracker, perform required actions
 	 */	
 	public void run() throws Exception {
+
+        System.out.println("TaskTracker Running");
 		
 		while(true) {
 			Socket socket = null;

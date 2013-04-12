@@ -13,16 +13,12 @@ public class ExampleProg1 {
 		job.setReduceClass("cmu.cs.distsystems.hw3.examples.Ex1Reducer");
 		
 		//TODO: implement this ... currently not implemented
-		job.setConfigFile("/home/mayank/workspace/" +
-				"DistributedSystems/src/cmu/cs/distsystems/hw3/cluster_config.txt");
+		job.setConfigFile(args[0]);
 		
-		job.setJar(args[0]);
-		System.out.println(args[0]);
-		job.setInputDir(args[1]);
-		System.out.println(args[1]);
-		job.setOutputDir(args[2]);
-		System.out.println(args[2]);
-		
+		job.setJar(args[1]);
+		job.setInputDir(args[2]);
+		job.setOutputDir(args[3]);
+
 		/*job.setJar("/Users/mimighostipad/Desktop/HW3/DistributedSystems.jar");
 		job.setInputDir("/Users/mimighostipad/Desktop/HW3/input/");
 		job.setOutputDir("/Users/mimighostipad/Desktop/HW3/output/");*/
