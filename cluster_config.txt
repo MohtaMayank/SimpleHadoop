@@ -1,0 +1,35 @@
+# This file is a simple configuration file for the Map Reduce cluster. 
+# Each line should contain a key value pair with format <Key:Value>
+# Lines beginning with a hash("#") are comments and are ignored. Blank lines are also ignored.
+
+# Job Tracker Configurations
+jobTrackerHost:ghc02.ghc.andrew.cmu.edu
+# Port on which clients will communicate with job tracker
+jobTrackerClientCommPort:4000
+# Port on which task trackers will communicate with the job tracker.
+jobTrackerWorkerCommPort:6000
+# Path to specify where the TaskManager to fetch the jar
+mrJar:./simplemr.jar
+# Num Workers. numWorker worker configs should follow.
+numWorkers:2
+
+# Worker Config 1. All worker configs start with "worker" prefix
+# Host name and port on which worker is to run.
+workerConfigNum:1
+workerHost:ghc07.ghc.andrew.cmu.edu
+workerPort:6001
+# Number of map tasks that can be run in parallel on the host.
+workerMapSlots:2
+# Number of reduce tasks that can be run in parallel on the host.
+workerReduceSlots:1
+
+# Worker Config 2.
+# Host name and port on which worker is to run.
+workerConfigNum:2
+workerHost:ghc44.ghc.andrew.cmu.edu
+workerPort:6011
+# Number of map tasks that can be run in parallel on the host.
+workerMapSlots:2
+# Number of reduce tasks that can be run in parallel on the host.
+workerReduceSlots:1
+
