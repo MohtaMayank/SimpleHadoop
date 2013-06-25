@@ -3,20 +3,20 @@
 # Lines beginning with a hash("#") are comments and are ignored. Blank lines are also ignored.
 
 # Job Tracker Configurations
-jobTrackerHost:mayank-laptop
+jobTrackerHost:ghc02.ghc.andrew.cmu.edu
 # Port on which clients will communicate with job tracker
 jobTrackerClientCommPort:4000
 # Port on which task trackers will communicate with the job tracker.
 jobTrackerWorkerCommPort:6000
-mrJar:/home/mayank/DistributedSystems/HW3/simplemr.jar
-
+# Path to specify where the TaskManager to fetch the jar
+mrJar:./simplemr.jar
 # Num Workers. numWorker worker configs should follow.
 numWorkers:2
 
 # Worker Config 1. All worker configs start with "worker" prefix
 # Host name and port on which worker is to run.
 workerConfigNum:1
-workerHost:mayank-laptop
+workerHost:ghc07.ghc.andrew.cmu.edu
 workerPort:6001
 # Number of map tasks that can be run in parallel on the host.
 workerMapSlots:2
@@ -26,7 +26,7 @@ workerReduceSlots:1
 # Worker Config 2.
 # Host name and port on which worker is to run.
 workerConfigNum:2
-workerHost:mayank-laptop
+workerHost:ghc44.ghc.andrew.cmu.edu
 workerPort:6011
 # Number of map tasks that can be run in parallel on the host.
 workerMapSlots:2

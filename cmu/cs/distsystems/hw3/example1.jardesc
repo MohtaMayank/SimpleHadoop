@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<jardesc>
+    <jar path="/home/mayank/DistributedSystems/HW3/example1.jar"/>
+    <options buildIfNeeded="true" compress="true" descriptionLocation="/DistributedSystems/src/cmu/cs/distsystems/hw3/example1.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="true" overwrite="true" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
+    <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
+    <selectedProjects/>
+    <manifest generateManifest="true" manifestLocation="" manifestVersion="1.0" reuseManifest="false" saveManifest="false" usesManifest="true">
+        <sealing sealJar="false">
+            <packagesToSeal/>
+            <packagesToUnSeal/>
+        </sealing>
+    </manifest>
+    <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
+        <javaElement handleIdentifier="=DistributedSystems/src&lt;cmu.cs.distsystems.hw3.examples"/>
+        <javaElement handleIdentifier="=DistributedSystems/src&lt;cmu.cs.distsystems.hw3.mapred"/>
+        <javaElement handleIdentifier="=DistributedSystems/src&lt;cmu.cs.distsystems.hw3.io"/>
+        <javaElement handleIdentifier="=DistributedSystems/src&lt;cmu.cs.distsystems.hw3.framework"/>
+    </selectedElements>
+</jardesc>
