@@ -106,6 +106,9 @@ public class JobTracker {
     }
 
 	public void run() {
+
+        System.out.println("JobTracker Started");
+
 		//Launch thread that will communicate with the clients.
 		Thread clientThread = new Thread(new ClientHandler(this));
 		clientThread.start();
